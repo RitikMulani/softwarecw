@@ -1,0 +1,435 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #a8d5e2 0%, #d4f1f4 100%);
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* Health Dashboard Cards */
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.btn-custom {
+  padding: 10px 20px;
+  font-weight: 500;
+}
+
+.dashboard-card {
+  margin-bottom: 20px;
+}
+
+/* Health Metric Cards */
+.health-metric-card {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.health-metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.metric-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-right: 15px;
+}
+
+.metric-icon.heart {
+  background: linear-gradient(135deg, #ff6b9d 0%, #ffa5c4 100%);
+}
+
+.metric-icon.steps {
+  background: linear-gradient(135deg, #7fb069 0%, #a8d5ba 100%);
+}
+
+.metric-icon.points {
+  background: linear-gradient(135deg, #6eb5d0 0%, #a8d5e2 100%);
+}
+
+.metric-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 10px 0;
+}
+
+.metric-subtitle {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Progress Bar */
+.progress-container {
+  margin-top: 15px;
+}
+
+.progress {
+  height: 12px;
+  border-radius: 10px;
+  background-color: #e0e0e0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #7fb069 0%, #a8d5ba 100%);
+  transition: width 0.3s ease;
+}
+
+/* Chart Container */
+.chart-container {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 15px 0;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wellness Character */
+.wellness-character {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.character-image {
+  font-size: 80px;
+  margin: 20px 0;
+}
+
+.stress-level {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+.stress-level.low {
+  color: #7fb069;
+}
+
+.stress-level.medium {
+  color: #f9a825;
+}
+
+.stress-level.high {
+  color: #e53935;
+}
+
+/* Stats Cards */
+.stat-card {
+  text-align: center;
+  padding: 30px 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #6eb5d0 0%, #a8d5e2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+/* Appointment Cards */
+.appointment-card {
+  border-left: 5px solid #6eb5d0;
+  background: white;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+}
+
+.appointment-card:hover {
+  border-left-width: 8px;
+}
+
+.prescription-card {
+  border-left: 5px solid #7fb069;
+  background: white;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+}
+
+.prescription-card:hover {
+  border-left-width: 8px;
+}
+
+.medical-record-card {
+  border-left: 5px solid #ff6b9d;
+  background: white;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+}
+
+.medical-record-card:hover {
+  border-left-width: 8px;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #6eb5d0 0%, #a8d5e2 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5ca4bf 0%, #97c4d1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(110, 181, 208, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #7fb069 0%, #a8d5ba 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #6e9f58 0%, #97c4a9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(127, 176, 105, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff6b9d 0%, #ffa5c4 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #ee5a8c 0%, #ee94b3 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #a8d5e2 0%, #d4f1f4 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #97c4d1 0%, #c3e0e3 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 213, 226, 0.4);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+/* Messages */
+.error-message {
+  padding: 15px 20px;
+  background-color: #ffe5e5;
+  color: #c62828;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.15);
+}
+
+.success-message {
+  padding: 15px 20px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+}
+
+/* Alert Styling */
+.alert {
+  border: none;
+  border-radius: 12px;
+  padding: 15px 20px;
+  font-weight: 500;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #c62828;
+}
+
+/* Footer */
+.footer {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px 0;
+  margin-top: 50px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Container */
+.container {
+  background: transparent;
+}
+
+/* Dashboard Page Specific */
+.dashboard-header {
+  margin-bottom: 30px;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.dashboard-subtitle {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 30px 0;
+}
+
+.quick-action-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 16px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Form Styling */
+.form-control, .form-select {
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  padding: 12px 15px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #6eb5d0;
+  box-shadow: 0 0 0 0.2rem rgba(110, 181, 208, 0.25);
+}
+
+.form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+/* Badge Styling */
+.badge {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.bg-primary {
+  background: linear-gradient(135deg, #6eb5d0 0%, #a8d5e2 100%) !important;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #7fb069 0%, #a8d5ba 100%) !important;
+}
+
+.bg-danger {
+  background: linear-gradient(135deg, #ff6b9d 0%, #ffa5c4 100%) !important;
+}
