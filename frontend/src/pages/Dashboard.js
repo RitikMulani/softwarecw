@@ -75,6 +75,21 @@ function Dashboard() {
     { rank: 5, name: 'Five Seven', stress: 62, trend: 'down' },
   ]);
 
+  const [userStats] = useState({
+    monthlySteps: 245000,
+    monthlyStepsAverage: 220000,
+    weeklyStress: 42,
+    weeklyStressAverage: 48
+  });
+
+  const [pointsLeaderboard] = useState([
+    { rank: 1, name: 'Alice Johnson', points: 450, isTopThree: true, multiplier: 2 },
+    { rank: 2, name: 'Bob Williams', points: 420, isTopThree: true, multiplier: 2 },
+    { rank: 3, name: 'Sarah Chen', points: 380, isTopThree: true, multiplier: 2 },
+    { rank: 4, name: 'James Wilson', points: 295, isTopThree: false, multiplier: 1 },
+    { rank: 5, name: 'Maria Garcia', points: 210, isTopThree: false, multiplier: 1 }
+  ]);
+
   const heartRate = 72;
   const steps = 8500;
   const stressScore = 45;
@@ -149,6 +164,14 @@ function Dashboard() {
     if (trend === 'down') return <span style={{ color: '#F44336' }}>↓</span>;
     return <span style={{ color: '#9E9E9E' }}>→</span>;
   };
+
+  const calculateUserPoints = () => {
+    const stepBonus = Math.floor((userStats.monthlySteps - userStats.monthlyStepsAverage) / 1000);
+    const stressBonus = Math.floor((userStats.weeklyStressAverage - userStats.weeklyStress) * 2);
+    return Math.max(0, stepBonus + stressBonus);
+  };
+
+  const userPoints = calculateUserPoints();
 
   const getHeartRateStatus = (hr) => {
     if (hr < 60) return { status: 'Low', color: '#2196F3', emoji: '📉' };
@@ -274,6 +297,141 @@ function Dashboard() {
           </span>
         </div>
       ))}
+    </div>
+  );
+
+  const renderPointsLeaderboardView = () => (
+    <div>
+      <div className="row mb-4">
+        <div className="col-md-6 mb-4">
+          <div className="dashboard-card">
+            <h4 style={{ color: '#667eea', marginBottom: '1.5rem' }}>📈 Your Points</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <div style={{ fontSize: '3rem' }}>💎</div>
+              <div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>{userPoints}</div>
+                <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.95rem' }}>Points earned this month</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-6 mb-4">
+          <div className="dashboard-card">
+            <h4 style={{ color: '#667eea', marginBottom: '1.5rem' }}>⭐ Your Progress</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Monthly Steps</span>
+                  <span style={{ fontWeight: 'bold', color: '#667eea' }}>{userStats.monthlySteps.toLocaleString()} / {userStats.monthlyStepsAverage.toLocaleString()}</span>
+                </div>
+                <div style={{ background: '#e0e7ff', borderRadius: '10px', height: '8px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    background: userStats.monthlySteps > userStats.monthlyStepsAverage ? 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)' : '#667eea',
+                    height: '100%',
+                    width: `${Math.min((userStats.monthlySteps / userStats.monthlyStepsAverage) * 100, 100)}%`,
+                    transition: 'width 0.3s'
+                  }}></div>
+                </div>
+                {userStats.monthlySteps > userStats.monthlyStepsAverage && (
+                  <p style={{ margin: '0.5rem 0 0 0', color: '#27AE60', fontSize: '0.9rem', fontWeight: '500' }}>
+                    +{Math.floor((userStats.monthlySteps - userStats.monthlyStepsAverage) / 1000)} points bonus ✓
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Weekly Stress</span>
+                  <span style={{ fontWeight: 'bold', color: '#667eea' }}>{userStats.weeklyStress} / {userStats.weeklyStressAverage}</span>
+                </div>
+                <div style={{ background: '#e0e7ff', borderRadius: '10px', height: '8px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    background: userStats.weeklyStress < userStats.weeklyStressAverage ? 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)' : '#667eea',
+                    height: '100%',
+                    width: `${Math.max(100 - (userStats.weeklyStress / userStats.weeklyStressAverage) * 100, 0)}%`,
+                    transition: 'width 0.3s'
+                  }}></div>
+                </div>
+                {userStats.weeklyStress < userStats.weeklyStressAverage && (
+                  <p style={{ margin: '0.5rem 0 0 0', color: '#27AE60', fontSize: '0.9rem', fontWeight: '500' }}>
+                    +{Math.floor((userStats.weeklyStressAverage - userStats.weeklyStress) * 2)} points bonus ✓
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-12">
+          <div className="dashboard-card">
+            <h3 className="card-title mb-3">💎 Monthly Leaderboard</h3>
+            <div style={{ overflowX: 'auto' }}>
+              {pointsLeaderboard.map((entry) => (
+                <div 
+                  key={entry.rank} 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '1.2rem',
+                    marginBottom: '0.8rem',
+                    background: entry.isTopThree ? 'linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)' : '#f8f9fa',
+                    borderRadius: '12px',
+                    border: entry.isTopThree ? '2px solid #FFD700' : '1px solid #e0e0e0',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  <div style={{ 
+                    width: '50px', 
+                    height: '50px', 
+                    borderRadius: '50%',
+                    background: entry.isTopThree ? '#FFD700' : '#e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '1.2rem',
+                    color: entry.isTopThree ? '#333' : '#999',
+                    marginRight: '1.5rem'
+                  }}>
+                    {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                  </div>
+                  
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#333' }}>{entry.name}</span>
+                      {entry.isTopThree && (
+                        <span style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600'
+                        }}>
+                          {entry.multiplier}x Points
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, color: '#999', fontSize: '0.9rem' }}>
+                      Rank #{entry.rank} • {entry.points} points
+                    </p>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#667eea' }}>
+                      {entry.points}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#999' }}>pts</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -896,6 +1054,23 @@ function Dashboard() {
             >
               ⌚ Smartwatch
             </button>
+            <button
+              onClick={() => setActiveView('points')}
+              style={{
+                width: '100%',
+                padding: '1rem 2rem',
+                background: activeView === 'points' ? '#667eea' : 'transparent',
+                color: activeView === 'points' ? 'white' : '#333',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500',
+                transition: 'all 0.2s'
+              }}
+            >
+              💎 Points
+            </button>
           </nav>
         </div>
 
@@ -1252,6 +1427,12 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
+            </>
+          )}
+          {activeView === 'points' && (
+            <>
+              <h2 style={{ marginBottom: '2rem' }}>💎 Points & Rewards</h2>
+              {renderPointsLeaderboardView()}
             </>
           )}
         </div>
