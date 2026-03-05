@@ -1,135 +1,221 @@
-import React from 'react';
-import './TurtleAvatar.css';
+import React, { useState, useMemo } from "react";
+import "./TurtleAvatar.css";
 
-const TURTLE_MOODS = {
-  happy: {
-    color: '#4CAF50',
-    face: '😊',
-    message: 'Great job! Your health metrics look excellent!',
-  },
-  neutral: {
-    color: '#2196F3',
-    face: '😐',
-    message: 'Keep going! Your health is stable.',
-  },
-  worried: {
-    color: '#FF9800',
-    face: '😟',
-    message: 'Take it easy! Your stress levels are elevated.',
-  },
-  stressed: {
-    color: '#F44336',
-    face: '😰',
-    message: 'Please rest! Your stress is high.',
-  },
-};
+function TurtleAvatar({ stressScore = 0, metrics = {}, className = "" }) {
+  console.log("Stress score is:", stressScore);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState("");
 
-const QA_DATABASE = [
-  {
-    question: 'How much water should I drink?',
-    answer: (metrics) =>
-      `Based on your activity (${metrics?.steps || 'N/A'} steps), aim for 2-3 liters of water daily.`,
-  },
-  {
-    question: 'Why is my heart rate high?',
-    answer: (metrics) =>
-      `Your current heart rate is ${metrics?.heartRate || 'N/A'} bpm. High heart rate can be caused by stress, exercise, or caffeine. If it persists, consult a doctor.`,
-  },
-  {
-    question: 'How to lower stress?',
-    answer: (metrics) => {
-      const stress = metrics?.stressScore || 50;
-      if (stress < 30)
-        return 'Your stress is low! Keep up the good work with regular breaks and exercise.';
-      if (stress < 60)
-        return 'Try deep breathing exercises, take short walks, and ensure 7-8 hours of sleep.';
-      return 'Your stress is high. Consider meditation, yoga, or speaking with a healthcare provider.';
-    },
-  },
-];
+  const heartRate = metrics?.heartRate;
+  const steps = metrics?.steps;
 
-function TurtleAvatar({ stressScore, metrics, className }) {
-  const [selectedQuestion, setSelectedQuestion] = React.useState(null);
-  const [isAnimating, setIsAnimating] = React.useState(false);
+  // ==========================
+  // MOOD LOGIC
+  // ==========================
+  const mood = useMemo(() => {
+    if (heartRate > 120) {
+      return {
+        color: "#ff1744",
+        message: "Whoa! Your heart rate is very high. Slow down.",
+        level: "danger",
+      };
+    }
 
-  // Determine mood based on stress score
-  const getMood = () => {
-    if (stressScore < 30) return TURTLE_MOODS.happy;
-    if (stressScore < 50) return TURTLE_MOODS.neutral;
-    if (stressScore < 70) return TURTLE_MOODS.worried;
-    return TURTLE_MOODS.stressed;
+    if (heartRate > 100) {
+      return {
+        color: "#ff9800",
+        message: "Your heart rate is elevated.",
+        level: "alert",
+      };
+    }
+
+    if (stressScore < 30) {
+      return {
+        color: "#4CAF50",
+        message: "You're calm and thriving.",
+        level: "happy",
+      };
+    }
+
+    if (stressScore < 60) {
+      return {
+        color: "#2196F3",
+        message: "You're steady and balanced.",
+        level: "neutral",
+      };
+    }
+
+    if (stressScore < 80) {
+      return {
+        color: "#FF9800",
+        message: "You're feeling tense.",
+        level: "stressed",
+      };
+    }
+
+    return {
+      color: "#F44336",
+      message: "Take a deep breath.",
+      level: "danger",
+    };
+  }, [stressScore, heartRate]);
+
+
+  // ==========================
+  // DYNAMIC MOUTH CURVE
+  // ==========================
+ let mouthCurve;
+
+if (mood.level === "happy") {
+  mouthCurve = 88;   // smile
+} else if (mood.level === "neutral") {
+  mouthCurve = 78;   // flat
+} else if (mood.level === "stressed") {
+  mouthCurve = 72;   // slight frown
+} else if (mood.level === "danger") {
+  mouthCurve = 65;   // deeper frown
+} else {
+  mouthCurve = 78;
+}
+
+  const handleWaterQuestion = () => {
+    setSelectedAnswer(
+      `Based on ${steps || "N/A"} steps, aim for 2-3L of water today.`
+    );
   };
 
-  const mood = getMood();
+  const handleHeartRateQuestion = () => {
+    setSelectedAnswer(
+      `Heart rate: ${heartRate || "N/A"} bpm. High values can be caused by stress, exercise or caffeine.`
+    );
+  };
 
-  const handleQuestionClick = (qa) => {
-    setIsAnimating(true);
-    setSelectedQuestion(qa);
-    setTimeout(() => setIsAnimating(false), 500);
+  const handleStressQuestion = () => {
+    setSelectedAnswer(
+      `Stress score: ${stressScore}. Try breathing exercises and short walks.`
+    );
   };
 
   return (
-    <div className={`turtle-avatar-container ${className || ''}`}>
-      <div
-        className={`turtle-avatar ${isAnimating ? 'turtle-bounce' : ''}`}
-        style={{ borderColor: mood.color }}
+    <div className={`turtle-avatar-container ${className}`}>
+      <button
+        className={`turtle-avatar ${mood.level}`}
+        style={{
+          borderColor: mood.color,
+          boxShadow: `
+            0 0 20px ${mood.color},
+            0 0 40px ${mood.color}66,
+            0 0 60px ${mood.color}33
+          `,
+        }}
+        onClick={() => setIsDialogOpen(true)}
       >
-        <div className="turtle-shell">
-          <svg viewBox="0 0 120 120" className="turtle-svg">
-            {/* Turtle shell - hexagonal pattern like emoji */}
-            <ellipse cx="60" cy="65" rx="40" ry="35" fill="#6B8E23" />
-            
-            {/* Shell pattern - hexagons */}
-            <polygon points="60,45 70,50 70,60 60,65 50,60 50,50" fill="#556B2F" opacity="0.8" />
-            <polygon points="45,55 55,50 55,60 45,65 35,60 35,55" fill="#556B2F" opacity="0.6" />
-            <polygon points="75,55 85,50 85,60 75,65 65,60 65,55" fill="#556B2F" opacity="0.6" />
-            <polygon points="45,70 55,65 55,75 45,80 35,75 35,70" fill="#556B2F" opacity="0.6" />
-            <polygon points="75,70 85,65 85,75 75,80 65,75 65,70" fill="#556B2F" opacity="0.6" />
-            
-            {/* Shell rim */}
-            <ellipse cx="60" cy="65" rx="40" ry="35" fill="none" stroke="#4A5D23" strokeWidth="2" />
+        <svg viewBox="0 0 200 200" width="210" height="210">
 
-            {/* Head - rounded like emoji */}
-            <ellipse cx="60" cy="35" rx="14" ry="12" fill="#8FBC8F" />
-            <circle cx="56" cy="33" r="2.5" fill="#000" />
-            <circle cx="64" cy="33" r="2.5" fill="#000" />
-            <ellipse cx="60" cy="38" rx="3" ry="1.5" fill="#000" opacity="0.6" />
+          {/* Shell (ALWAYS GREEN) */}
+          <ellipse
+            cx="100"
+            cy="115"
+            rx="65"
+            ry="60"
+            fill="#4CAF50"
+            stroke="#2e7d32"
+            strokeWidth="4"
+          />
 
-            {/* Front legs */}
-            <ellipse cx="40" cy="60" rx="8" ry="6" fill="#8FBC8F" transform="rotate(-20 40 60)" />
-            <ellipse cx="80" cy="60" rx="8" ry="6" fill="#8FBC8F" transform="rotate(20 80 60)" />
+          {/* Shell pattern */}
+          <circle cx="100" cy="115" r="25" fill="rgba(0,0,0,0.1)" />
+          <circle cx="75" cy="95" r="15" fill="rgba(0,0,0,0.1)" />
+          <circle cx="125" cy="95" r="15" fill="rgba(0,0,0,0.1)" />
+          <circle cx="75" cy="135" r="15" fill="rgba(0,0,0,0.1)" />
+          <circle cx="125" cy="135" r="15" fill="rgba(0,0,0,0.1)" />
 
-            {/* Back legs */}
-            <ellipse cx="35" cy="85" rx="9" ry="6" fill="#8FBC8F" transform="rotate(-30 35 85)" />
-            <ellipse cx="85" cy="85" rx="9" ry="6" fill="#8FBC8F" transform="rotate(30 85 85)" />
+          {/* Head */}
+          <circle cx="100" cy="55" r="26" fill="#A5D6A7" />
 
-            {/* Tail */}
-            <ellipse cx="60" cy="98" rx="4" ry="6" fill="#8FBC8F" />
-          </svg>
-        </div>
-        <div className="turtle-mood-indicator" style={{ color: mood.color, fontSize: '1.5rem', textAlign: 'center', marginTop: '0.5rem' }}>
-          {mood.face}
-        </div>
-      </div>
+          {/* Eyes */}
+          {mood.level === "danger" ? (
+            <>
+              <line x1="85" y1="55" x2="95" y2="50" stroke="black" strokeWidth="3" />
+              <line x1="105" y1="50" x2="115" y2="55" stroke="black" strokeWidth="3" />
+            </>
+          ) : (
+            <>
+              <circle cx="90" cy="50" r="6" fill="black" className="blink" />
+              <circle cx="110" cy="50" r="6" fill="black" className="blink" />
+            </>
+          )}
+
+          {/* Mouth */}
+          <path
+            d={`M92 78 Q100 ${mouthCurve} 108 78`}
+            stroke="black"
+            strokeWidth="3"
+            fill="transparent"
+            className="mouth"
+          />
+
+          {/* Legs */}
+          <ellipse cx="50" cy="110" rx="20" ry="14" fill="#A5D6A7" />
+          <ellipse cx="150" cy="110" rx="20" ry="14" fill="#A5D6A7" />
+          <ellipse cx="75" cy="170" rx="18" ry="12" fill="#A5D6A7" />
+          <ellipse cx="125" cy="170" rx="18" ry="12" fill="#A5D6A7" />
+
+          {/* Tail */}
+          <polygon points="100,180 94,195 106,195" fill="#A5D6A7" />
+
+          {/* Sweat */}
+          {mood.level === "danger" && (
+            <ellipse
+              cx="130"
+              cy="40"
+              rx="6"
+              ry="10"
+              fill="#4FC3F7"
+              className="sweat"
+            />
+          )}
+
+          {/* Sparkles */}
+          {mood.level === "happy" && (
+            <>
+              <circle cx="40" cy="40" r="4" fill="#FFD700" className="sparkle" />
+              <circle cx="165" cy="60" r="3" fill="#FFD700" className="sparkle delay" />
+            </>
+          )}
+
+          {/* Heartbeat */}
+          {mood.level === "alert" && (
+            <polyline
+              points="60,20 75,20 85,10 95,30 105,15 115,20 140,20"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              className="heartbeat"
+            />
+          )}
+        </svg>
+      </button>
 
       <div className="turtle-message" style={{ color: mood.color }}>
-        {selectedQuestion ? selectedQuestion.answer(metrics) : mood.message}
+        {selectedAnswer || mood.message}
       </div>
 
-      <div className="turtle-qa">
-        <div className="qa-label">Ask me:</div>
-        {QA_DATABASE.map((qa, index) => (
+      {isDialogOpen && (
+        <div className="turtle-dialog">
           <button
-            key={index}
-            className="qa-button"
-            onClick={() => handleQuestionClick(qa)}
-            style={{ borderColor: mood.color }}
-            aria-label={qa.question}
+            onClick={() => {
+              setIsDialogOpen(false);
+              setSelectedAnswer("");
+            }}
           >
-            {qa.question}
+            Close
           </button>
-        ))}
-      </div>
+          <button onClick={handleWaterQuestion}>Water intake?</button>
+          <button onClick={handleHeartRateQuestion}>Heart rate?</button>
+          <button onClick={handleStressQuestion}>Lower stress?</button>
+        </div>
+      )}
     </div>
   );
 }
