@@ -102,12 +102,6 @@ const Login = () => {
                   </button>
                 </form>
 
-                <div className="text-center mt-4">
-                  <small className="text-muted">
-                    Demo: steven.merkel@email.com / User@123
-                  </small>
-                </div>
-
                 <div className="text-center mt-3">
                   <span style={{ color: '#666' }}>Don't have an account? </span>
                   <Link 
