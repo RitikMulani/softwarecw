@@ -15,6 +15,8 @@ import adminRoutes from './routes/admin.routes.js';
 import deviceRoutes from './routes/device.routes.js';
 import medicalRoutes from './routes/medical.routes.js';
 import prescriptionRoutes from './routes/prescription.routes.js';
+import leaderboardRoutes from './routes/leaderboard.routes.js';
+import pointsRoutes from './routes/points.routes.js';
 
 // Import middleware
 import { apiLimiter } from './middleware/rateLimiter.js';
@@ -62,6 +64,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/device', deviceRoutes);
 app.use('/api/medical-records', medicalRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/points', pointsRoutes);
 
 // Swagger documentation
 const swaggerOptions = {

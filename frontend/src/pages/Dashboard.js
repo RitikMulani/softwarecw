@@ -72,13 +72,7 @@ function Dashboard() {
     }
   ]);
   
-  const [leaderboard] = useState([
-    { rank: 1, name: 'Steven Merkel', stress: 35, trend: 'up' },
-    { rank: 2, name: 'Jackson Mike', stress: 42, trend: 'down' },
-    { rank: 3, name: 'Ashton Rob', stress: 48, trend: 'neutral' },
-    { rank: 4, name: 'Bob Ashton', stress: 55, trend: 'up' },
-    { rank: 5, name: 'Five Seven', stress: 62, trend: 'down' },
-  ]);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   const [userStats] = useState({
     monthlySteps: 245000,
@@ -87,13 +81,7 @@ function Dashboard() {
     weeklyStressAverage: 48
   });
 
-  const [pointsLeaderboard] = useState([
-    { rank: 1, name: 'Alice Johnson', points: 450, isTopThree: true, multiplier: 2 },
-    { rank: 2, name: 'Bob Williams', points: 420, isTopThree: true, multiplier: 2 },
-    { rank: 3, name: 'Sarah Chen', points: 380, isTopThree: true, multiplier: 2 },
-    { rank: 4, name: 'James Wilson', points: 295, isTopThree: false, multiplier: 1 },
-    { rank: 5, name: 'Maria Garcia', points: 210, isTopThree: false, multiplier: 1 }
-  ]);
+  const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
 
   const heartRate = 72;
   const steps = 8500;
@@ -127,6 +115,12 @@ function Dashboard() {
     
     // Fetch profile data
     fetchProfileData();
+
+    // Fetch leaderboard data
+    fetchLeaderboard();
+
+    // Fetch points leaderboard data
+    fetchPointsLeaderboard();
 
     return () => clearInterval(interval);
   }, []);
@@ -186,6 +180,24 @@ function Dashboard() {
       setAccessRequests(pending);
     } catch (error) {
       // Access requests unavailable
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await api.get('/leaderboard');
+      setLeaderboard(response.data.leaderboard || []);
+    } catch (error) {
+      // Leaderboard unavailable - will show empty
+    }
+  };
+
+  const fetchPointsLeaderboard = async () => {
+    try {
+      const response = await api.get('/points');
+      setPointsLeaderboard(response.data.leaderboard || []);
+    } catch (error) {
+      // Points leaderboard unavailable - will show empty
     }
   };
 
@@ -484,17 +496,21 @@ function Dashboard() {
   const renderLeaderboardView = () => (
     <div className="dashboard-card">
       <h3 className="card-title mb-3">🏆 Leaderboard (Lowest Stress)</h3>
-      {leaderboard.map((entry) => (
-        <div key={entry.rank} className="leaderboard-row">
-          <span className="leaderboard-rank">#{entry.rank}</span>
-          <span className="leaderboard-name">{entry.name}</span>
-          <div className="leaderboard-divider"></div>
-          <span className="leaderboard-stress">
-            Stress: {entry.stress}
-            <span style={{ marginLeft: '0.5rem' }}>{getTrendArrow(entry.trend)}</span>
-          </span>
-        </div>
-      ))}
+      {leaderboard.length === 0 ? (
+        <p style={{ color: '#999', textAlign: 'center', padding: '2rem' }}>Loading leaderboard data...</p>
+      ) : (
+        leaderboard.map((entry) => (
+          <div key={entry.rank} className="leaderboard-row">
+            <span className="leaderboard-rank">#{entry.rank}</span>
+            <span className="leaderboard-name">{entry.name}</span>
+            <div className="leaderboard-divider"></div>
+            <span className="leaderboard-stress">
+              Stress: {entry.stress}
+              <span style={{ marginLeft: '0.5rem' }}>{getTrendArrow(entry.trend)}</span>
+            </span>
+          </div>
+        ))
+      )}
     </div>
   );
 
@@ -507,8 +523,8 @@ function Dashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div style={{ fontSize: '3rem' }}>💎</div>
               <div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>{userPoints}</div>
-                <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.95rem' }}>Points earned this month</p>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>{profileData?.points || 0}</div>
+                <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.95rem' }}>Points earned</p>
               </div>
             </div>
           </div>
@@ -567,7 +583,10 @@ function Dashboard() {
           <div className="dashboard-card">
             <h3 className="card-title mb-3">💎 Monthly Leaderboard</h3>
             <div style={{ overflowX: 'auto' }}>
-              {pointsLeaderboard.map((entry) => (
+              {pointsLeaderboard.length === 0 ? (
+                <p style={{ color: '#999', textAlign: 'center', padding: '2rem' }}>Loading points leaderboard...</p>
+              ) : (
+                pointsLeaderboard.map((entry) => (
                 <div 
                   key={entry.rank} 
                   style={{
@@ -625,7 +644,8 @@ function Dashboard() {
                     <div style={{ fontSize: '0.85rem', color: '#999' }}>pts</div>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         </div>

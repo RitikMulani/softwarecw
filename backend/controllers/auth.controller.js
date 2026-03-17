@@ -198,7 +198,7 @@ export async function refresh(req, res) {
 export async function me(req, res) {
   try {
     const [users] = await db.query(
-      `SELECT id, email, full_name, user_type, phone, date_of_birth, gender, address, created_at, updated_at 
+      `SELECT id, email, full_name, user_type, phone, date_of_birth, gender, address, points, created_at, updated_at 
        FROM users WHERE id = ?`,
       [req.user.userId]
     );
