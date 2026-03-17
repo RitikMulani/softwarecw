@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI, usersAPI } from '../services/api';
+import Navbar from '../components/Navbar';
 
 const Profile = () => {
   const { user, updateUser, isPatient, isDoctor } = useAuth();
@@ -61,7 +62,6 @@ const Profile = () => {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching profile:', error);
       setLoading(false);
     }
   };
@@ -108,7 +108,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="container mt-4">
+    <>
+      <Navbar />
+      <div className="container mt-4">
       <h2>My Profile</h2>
       <p className="text-muted">Update your profile information</p>
 
@@ -345,6 +347,7 @@ const Profile = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

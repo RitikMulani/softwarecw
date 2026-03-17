@@ -9,9 +9,12 @@ import swaggerUi from 'swagger-ui-express';
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
+import usersRoutes from './routes/users.routes.js';
 import sharingRoutes from './routes/sharing.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import deviceRoutes from './routes/device.routes.js';
+import medicalRoutes from './routes/medical.routes.js';
+import prescriptionRoutes from './routes/prescription.routes.js';
 
 // Import middleware
 import { apiLimiter } from './middleware/rateLimiter.js';
@@ -53,9 +56,12 @@ app.use('/api', apiLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/sharing', sharingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/device', deviceRoutes);
+app.use('/api/medical-records', medicalRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
 
 // Swagger documentation
 const swaggerOptions = {

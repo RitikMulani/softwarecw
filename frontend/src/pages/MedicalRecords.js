@@ -9,6 +9,9 @@ const MedicalRecords = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     patient_id: '',
@@ -32,7 +35,6 @@ const MedicalRecords = () => {
       setMedicalRecords(response.data.medicalRecords || []);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching medical records:', error);
       setLoading(false);
     }
   };
@@ -42,7 +44,7 @@ const MedicalRecords = () => {
       const response = await usersAPI.getAllPatients();
       setPatients(response.data.patients || []);
     } catch (error) {
-      console.error('Error fetching patients:', error);
+      // Patients list unavailable
     }
   };
 
@@ -76,6 +78,45 @@ const MedicalRecords = () => {
         text: error.response?.data?.message || 'Error creating medical record' 
       });
     }
+  };
+
+  const handleEditRecord = (record) => {
+    setEditingId(record.id);
+    setEditFormData({
+      diagnosis: record.diagnosis || '',
+      symptoms: record.symptoms || '',
+      treatment: record.treatment || '',
+      notes: record.notes || '',
+      record_date: record.record_date ? record.record_date.split('T')[0] : ''
+    });
+  };
+
+  const handleEditFormChange = (e) => {
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSaveRecord = async () => {
+    setIsSaving(true);
+    try {
+      await medicalRecordsAPI.updateMedicalRecord(editingId, editFormData);
+      setMessage({ type: 'success', text: 'Medical record updated successfully!' });
+      setEditingId(null);
+      fetchMedicalRecords();
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Error updating medical record' 
+      });
+    }
+    setIsSaving(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   if (loading) {
@@ -209,56 +250,153 @@ const MedicalRecords = () => {
             </div>
           </div>
         ) : (
-          medicalRecords.map(record => (
-            <div key={record.id} className="col-md-12 mb-3">
-              <div className="card medical-record-card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <h5 className="card-title">
-                      Record Date: {new Date(record.record_date).toLocaleDateString()}
-                    </h5>
-                    <small className="text-muted">
+          medicalRecords.map(record => {
+            const isEditing = editingId === record.id;
+            
+            if (isEditing) {
+              // Edit mode
+              return (
+                <div key={record.id} className="col-md-12 mb-3">
+                  <div className="card">
+                    <div className="card-body">
+                      <h5 className="card-title">Edit Medical Record</h5>
+                      
+                      <div className="mb-3">
+                        <label className="form-label">Record Date</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="record_date"
+                          value={editFormData.record_date}
+                          onChange={handleEditFormChange}
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Symptoms</label>
+                        <textarea
+                          className="form-control"
+                          name="symptoms"
+                          value={editFormData.symptoms}
+                          onChange={handleEditFormChange}
+                          rows="2"
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Diagnosis</label>
+                        <textarea
+                          className="form-control"
+                          name="diagnosis"
+                          value={editFormData.diagnosis}
+                          onChange={handleEditFormChange}
+                          rows="2"
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Treatment</label>
+                        <textarea
+                          className="form-control"
+                          name="treatment"
+                          value={editFormData.treatment}
+                          onChange={handleEditFormChange}
+                          rows="2"
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Notes</label>
+                        <textarea
+                          className="form-control"
+                          name="notes"
+                          value={editFormData.notes}
+                          onChange={handleEditFormChange}
+                          rows="2"
+                        />
+                      </div>
+
+                      <button 
+                        className="btn btn-primary me-2"
+                        onClick={handleSaveRecord}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : '💾 Save'}
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // View mode
+            return (
+              <div key={record.id} className="col-md-12 mb-3">
+                <div className="card medical-record-card">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <h5 className="card-title">
+                        Record Date: {new Date(record.record_date).toLocaleDateString()}
+                      </h5>
+                      <div>
+                        <button 
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => handleEditRecord(record)}
+                        >
+                          ✏️ Edit
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <small className="text-muted d-block mb-2">
                       {isPatient ? `Dr. ${record.doctor_name}` : record.patient_name}
                     </small>
+                    
+                    {isPatient && record.specialization && (
+                      <p className="card-text mb-1">
+                        <strong>Specialization:</strong> {record.specialization}
+                      </p>
+                    )}
+                    
+                    {record.symptoms && (
+                      <div className="mt-2">
+                        <strong>Symptoms:</strong>
+                        <p className="card-text">{record.symptoms}</p>
+                      </div>
+                    )}
+                    
+                    {record.diagnosis && (
+                      <div className="mt-2">
+                        <strong>Diagnosis:</strong>
+                        <p className="card-text">{record.diagnosis}</p>
+                      </div>
+                    )}
+                    
+                    {record.treatment && (
+                      <div className="mt-2">
+                        <strong>Treatment:</strong>
+                        <p className="card-text">{record.treatment}</p>
+                      </div>
+                    )}
+                    
+                    {record.notes && (
+                      <div className="mt-2">
+                        <strong>Notes:</strong>
+                        <p className="card-text">{record.notes}</p>
+                      </div>
+                    )}
                   </div>
-                  
-                  {isPatient && record.specialization && (
-                    <p className="card-text mb-1">
-                      <strong>Specialization:</strong> {record.specialization}
-                    </p>
-                  )}
-                  
-                  {record.symptoms && (
-                    <div className="mt-2">
-                      <strong>Symptoms:</strong>
-                      <p className="card-text">{record.symptoms}</p>
-                    </div>
-                  )}
-                  
-                  {record.diagnosis && (
-                    <div className="mt-2">
-                      <strong>Diagnosis:</strong>
-                      <p className="card-text">{record.diagnosis}</p>
-                    </div>
-                  )}
-                  
-                  {record.treatment && (
-                    <div className="mt-2">
-                      <strong>Treatment:</strong>
-                      <p className="card-text">{record.treatment}</p>
-                    </div>
-                  )}
-                  
-                  {record.notes && (
-                    <div className="mt-2">
-                      <strong>Notes:</strong>
-                      <p className="card-text">{record.notes}</p>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

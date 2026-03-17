@@ -75,11 +75,31 @@ router.post('/logout', authenticateToken, authController.logout);
 /**
  * @swagger
  * /api/auth/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/profile', authenticateToken, authController.me);
+
+/**
+ * @swagger
+ * /api/auth/profile:
  *   patch:
  *     summary: Update user profile
  *     tags: [Auth]
  */
 router.patch(
+  '/profile',
+  authenticateToken,
+  authController.updateProfile
+);
+
+/**
+ * PUT alias for PATCH (for compatibility)
+ */
+router.put(
   '/profile',
   authenticateToken,
   authController.updateProfile

@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { useAuth } from '../context/AuthContext';
 import TurtleAvatar from '../components/TurtleAvatar/TurtleAvatar';
+import { authAPI, usersAPI } from '../services/api';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -22,6 +23,10 @@ function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState('dashboard');
+  const [profileData, setProfileData] = useState(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showHeartRateDetails, setShowHeartRateDetails] = useState(false);
   const [showBloodPressureDetails, setShowBloodPressureDetails] = useState(false);
@@ -119,9 +124,60 @@ function Dashboard() {
 
     // Fetch access requests
     fetchAccessRequests();
+    
+    // Fetch profile data
+    fetchProfileData();
 
     return () => clearInterval(interval);
   }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await authAPI.getProfile();
+      setProfileData(response.data.user);
+    } catch (error) {
+      // Profile fetch failed - using default empty profile
+    }
+  };
+
+  const handleEditProfile = () => {
+    setEditFormData({
+      full_name: profileData?.full_name || '',
+      phone: profileData?.phone || '',
+      date_of_birth: profileData?.date_of_birth ? profileData.date_of_birth.split('T')[0] : '',
+      gender: profileData?.gender || '',
+      address: profileData?.address || '',
+      blood_group: profileData?.patientDetails?.blood_group || '',
+      allergies: profileData?.patientDetails?.allergies || '',
+      chronic_conditions: profileData?.patientDetails?.chronic_conditions || '',
+      emergency_contact: profileData?.patientDetails?.emergency_contact || '',
+      emergency_phone: profileData?.patientDetails?.emergency_phone || '',
+    });
+    setIsEditingProfile(true);
+  };
+
+  const handleEditFormChange = (e) => {
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      await usersAPI.updateProfile(editFormData);
+      await fetchProfileData();
+      setIsEditingProfile(false);
+    } catch (error) {
+      alert('Error saving profile: ' + (error.response?.data?.message || error.message));
+    }
+    setIsSavingProfile(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+  };
 
   const fetchAccessRequests = async () => {
     try {
@@ -129,7 +185,7 @@ function Dashboard() {
       const pending = response.data.requests?.filter(req => req.status === 'pending') || [];
       setAccessRequests(pending);
     } catch (error) {
-      console.error('Error fetching access requests:', error);
+      // Access requests unavailable
     }
   };
 
@@ -137,10 +193,9 @@ function Dashboard() {
     setLoading(true);
     try {
       await api.post(`/sharing/${requestId}/accept`);
-      alert('Access request approved! The provider can now view your health data.');
+      alert('Access request approved!');
       fetchAccessRequests();
     } catch (error) {
-      console.error('Error approving request:', error);
       alert('Failed to approve request');
     }
     setLoading(false);
@@ -150,10 +205,9 @@ function Dashboard() {
     setLoading(true);
     try {
       await api.post(`/sharing/${requestId}/reject`);
-      alert('Access request rejected.');
+      alert('Request rejected.');
       fetchAccessRequests();
     } catch (error) {
-      console.error('Error rejecting request:', error);
       alert('Failed to reject request');
     }
     setLoading(false);
@@ -243,45 +297,189 @@ function Dashboard() {
 
   const stepsPercent = Math.min((steps / 10000) * 100, 100);
 
-  const renderProfileView = () => (
-    <div className="dashboard-card">
-      <h3 className="card-title mb-4">👤 Profile</h3>
-      <div style={{ display: 'flex', gap: '3rem' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Name</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>{user?.name || 'User'}</p>
+  const renderProfileView = () => {
+    if (isEditingProfile) {
+      // Edit mode
+      return (
+        <div className="dashboard-card">
+          <h3 className="card-title mb-4">👤 Edit Profile</h3>
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Full Name</label>
+              <input
+                type="text"
+                className="form-control"
+                name="full_name"
+                value={editFormData.full_name}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Phone</label>
+              <input
+                type="tel"
+                className="form-control"
+                name="phone"
+                value={editFormData.phone}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Date of Birth</label>
+              <input
+                type="date"
+                className="form-control"
+                name="date_of_birth"
+                value={editFormData.date_of_birth}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Gender</label>
+              <select
+                className="form-control"
+                name="gender"
+                value={editFormData.gender}
+                onChange={handleEditFormChange}
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Address</label>
+              <input
+                type="text"
+                className="form-control"
+                name="address"
+                value={editFormData.address}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Blood Type</label>
+              <input
+                type="text"
+                className="form-control"
+                name="blood_group"
+                value={editFormData.blood_group}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Allergies</label>
+              <input
+                type="text"
+                className="form-control"
+                name="allergies"
+                value={editFormData.allergies}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Chronic Conditions</label>
+              <textarea
+                className="form-control"
+                name="chronic_conditions"
+                value={editFormData.chronic_conditions}
+                onChange={handleEditFormChange}
+                rows="2"
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Emergency Contact</label>
+              <input
+                type="text"
+                className="form-control"
+                name="emergency_contact"
+                value={editFormData.emergency_contact}
+                onChange={handleEditFormChange}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Emergency Phone</label>
+              <input
+                type="tel"
+                className="form-control"
+                name="emergency_phone"
+                value={editFormData.emergency_phone}
+                onChange={handleEditFormChange}
+              />
+            </div>
           </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Email</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>{user?.email || 'user@turtlehealth.com'}</p>
-          </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Age</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>32 years</p>
-          </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Height</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>5'10" (178 cm)</p>
+          <div className="mt-3">
+            <button 
+              className="btn btn-primary me-2"
+              onClick={handleSaveProfile}
+              disabled={isSavingProfile}
+            >
+              {isSavingProfile ? 'Saving...' : '💾 Save'}
+            </button>
+            <button 
+              className="btn btn-secondary"
+              onClick={handleCancelEdit}
+              disabled={isSavingProfile}
+            >
+              Cancel
+            </button>
           </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Weight</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>165 lbs (75 kg)</p>
+      );
+    }
+
+    // View mode
+    return (
+      <div className="dashboard-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h3 className="card-title" style={{margin: 0}}>👤 Profile</h3>
+          <button 
+            className="btn btn-outline-primary btn-sm"
+            onClick={handleEditProfile}
+          >
+            ✏️ Edit
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '3rem' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Name</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.full_name || 'Not provided'}</p>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Email</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.email || 'user@turtlehealth.com'}</p>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Date of Birth</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>
+                {profileData?.date_of_birth ? new Date(profileData.date_of_birth).toLocaleDateString() : 'Not provided'}
+              </p>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Phone</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.phone || 'Not provided'}</p>
+            </div>
           </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Blood Type</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>O+</p>
-          </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Emergency Contact</label>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>Jane Doe - (555) 123-4567</p>
+          <div style={{ flex: 1 }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Blood Type</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.patientDetails?.blood_group || 'Not provided'}</p>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Allergies</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.patientDetails?.allergies || 'None' }</p>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', color: '#666', display: 'block', marginBottom: '0.5rem' }}>Emergency Contact</label>
+              <p style={{ fontSize: '1.1rem', margin: 0 }}>{profileData?.patientDetails?.emergency_contact ? `${profileData.patientDetails.emergency_contact} - ${profileData.patientDetails.emergency_phone}` : 'Not provided'}</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderLeaderboardView = () => (
     <div className="dashboard-card">
@@ -435,52 +633,144 @@ function Dashboard() {
     </div>
   );
 
-  const renderMedicalView = () => (
-    <div className="dashboard-card">
-      <h3 className="card-title mb-4">💊 Medical Information</h3>
-      
-      <div style={{ marginBottom: '2rem' }}>
-        <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Current Medications</h4>
-        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '10px', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <strong>Lisinopril 10mg</strong>
-            <span style={{ color: '#666' }}>1x daily</span>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>For blood pressure management</p>
-        </div>
-        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '10px', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <strong>Vitamin D3 2000 IU</strong>
-            <span style={{ color: '#666' }}>1x daily</span>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>Supplement</p>
-        </div>
-        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <strong>Aspirin 81mg</strong>
-            <span style={{ color: '#666' }}>1x daily</span>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>Preventive care</p>
-        </div>
-      </div>
+  const renderMedicalView = () => {
+    const patientDetails = profileData?.patientDetails || {};
+    const isEditing = activeView === 'medical' && isEditingProfile;
 
-      <div style={{ marginBottom: '2rem' }}>
-        <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Conditions</h4>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{ background: '#e3f2fd', color: '#1976d2', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem' }}>Hypertension (Controlled)</span>
-          <span style={{ background: '#fff3e0', color: '#f57c00', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem' }}>Seasonal Allergies</span>
-        </div>
-      </div>
+    if (isEditing) {
+      return (
+        <div className="dashboard-card">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h3 className="card-title mb-0">💊 Medical Information</h3>
+            <div>
+              <button
+                className="btn btn-primary btn-sm me-2"
+                onClick={handleSaveProfile}
+                disabled={isSavingProfile}
+              >
+                {isSavingProfile ? 'Saving...' : '💾 Save'}
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={handleCancelEdit}
+                disabled={isSavingProfile}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
 
-      <div>
-        <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Allergies</h4>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{ background: '#ffebee', color: '#c62828', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem' }}>Penicillin</span>
-          <span style={{ background: '#ffebee', color: '#c62828', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem' }}>Pollen</span>
+          <div style={{ marginBottom: '2rem' }}>
+            <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Blood Type</h4>
+            <input
+              type="text"
+              className="form-control"
+              name="blood_group"
+              value={editFormData.blood_group || ''}
+              onChange={handleEditFormChange}
+              placeholder="e.g., O+, A-, B+"
+            />
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Chronic Conditions</h4>
+            <textarea
+              className="form-control"
+              name="chronic_conditions"
+              value={editFormData.chronic_conditions || ''}
+              onChange={handleEditFormChange}
+              rows="3"
+              placeholder="List any chronic conditions (e.g., Hypertension, Diabetes)"
+            />
+          </div>
+
+          <div>
+            <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Allergies</h4>
+            <textarea
+              className="form-control"
+              name="allergies"
+              value={editFormData.allergies || ''}
+              onChange={handleEditFormChange}
+              rows="3"
+              placeholder="List any allergies (e.g., Penicillin, Pollen)"
+            />
+          </div>
         </div>
+      );
+    }
+
+    // View mode
+    return (
+      <div className="dashboard-card">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3 className="card-title mb-0">💊 Medical Information</h3>
+          <button
+            className="btn btn-outline-primary btn-sm"
+            onClick={handleEditProfile}
+          >
+            ✏️ Edit
+          </button>
+        </div>
+
+        {!patientDetails.blood_group && !patientDetails.allergies && !patientDetails.chronic_conditions ? (
+          <p style={{ color: '#999' }}>No medical information added yet. Click Edit to add your details.</p>
+        ) : (
+          <>
+            {patientDetails.blood_group && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Blood Type</h4>
+                <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{patientDetails.blood_group}</p>
+              </div>
+            )}
+
+            {patientDetails.chronic_conditions && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Chronic Conditions</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {patientDetails.chronic_conditions.split(',').map((condition, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        background: '#e3f2fd',
+                        color: '#1976d2',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {condition.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {patientDetails.allergies && (
+              <div>
+                <h4 style={{ color: '#667eea', marginBottom: '1rem' }}>Allergies</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {patientDetails.allergies.split(',').map((allergy, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        background: '#ffebee',
+                        color: '#c62828',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {allergy.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderBiometricsView = () => (
     <>

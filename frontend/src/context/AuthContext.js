@@ -52,13 +52,10 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      await authAPI.register(userData);
+      const response = await authAPI.register(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
-      };
+      throw new Error(error.response?.data?.message || 'Registration failed');
     }
   };
 

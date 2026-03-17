@@ -9,6 +9,9 @@ const Prescriptions = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     patient_id: '',
@@ -33,7 +36,6 @@ const Prescriptions = () => {
       setPrescriptions(response.data.prescriptions || []);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching prescriptions:', error);
       setLoading(false);
     }
   };
@@ -43,7 +45,7 @@ const Prescriptions = () => {
       const response = await usersAPI.getAllPatients();
       setPatients(response.data.patients || []);
     } catch (error) {
-      console.error('Error fetching patients:', error);
+      // Patients list unavailable
     }
   };
 
@@ -78,6 +80,46 @@ const Prescriptions = () => {
         text: error.response?.data?.message || 'Error creating prescription' 
       });
     }
+  };
+
+  const handleEditPrescription = (prescription) => {
+    setEditingId(prescription.id);
+    setEditFormData({
+      medication_name: prescription.medication_name || '',
+      dosage: prescription.dosage || '',
+      frequency: prescription.frequency || '',
+      duration: prescription.duration || '',
+      instructions: prescription.instructions || '',
+      prescribed_date: prescription.prescribed_date ? prescription.prescribed_date.split('T')[0] : ''
+    });
+  };
+
+  const handleEditFormChange = (e) => {
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSavePrescription = async () => {
+    setIsSaving(true);
+    try {
+      await prescriptionsAPI.updatePrescription(editingId, editFormData);
+      setMessage({ type: 'success', text: 'Prescription updated successfully!' });
+      setEditingId(null);
+      fetchPrescriptions();
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Error updating prescription' 
+      });
+    }
+    setIsSaving(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   if (loading) {
@@ -225,56 +267,165 @@ const Prescriptions = () => {
             </div>
           </div>
         ) : (
-          prescriptions.map(prescription => (
-            <div key={prescription.id} className="col-md-6 mb-3">
-              <div className="card prescription-card">
-                <div className="card-body">
-                  <h5 className="card-title">{prescription.medication_name}</h5>
-                  
-                  <p className="card-text mb-1">
-                    <strong>{isPatient ? 'Doctor' : 'Patient'}:</strong>{' '}
-                    {isPatient ? prescription.doctor_name : prescription.patient_name}
-                  </p>
-                  
-                  {isPatient && prescription.specialization && (
-                    <p className="card-text mb-1">
-                      <strong>Specialization:</strong> {prescription.specialization}
-                    </p>
-                  )}
-                  
-                  {prescription.dosage && (
-                    <p className="card-text mb-1">
-                      <strong>Dosage:</strong> {prescription.dosage}
-                    </p>
-                  )}
-                  
-                  {prescription.frequency && (
-                    <p className="card-text mb-1">
-                      <strong>Frequency:</strong> {prescription.frequency}
-                    </p>
-                  )}
-                  
-                  {prescription.duration && (
-                    <p className="card-text mb-1">
-                      <strong>Duration:</strong> {prescription.duration}
-                    </p>
-                  )}
-                  
-                  <p className="card-text mb-1">
-                    <strong>Prescribed Date:</strong>{' '}
-                    {new Date(prescription.prescribed_date).toLocaleDateString()}
-                  </p>
-                  
-                  {prescription.instructions && (
-                    <div className="mt-2">
-                      <strong>Instructions:</strong>
-                      <p className="card-text">{prescription.instructions}</p>
+          prescriptions.map(prescription => {
+            const isEditing = editingId === prescription.id;
+
+            if (isEditing) {
+              // Edit mode
+              return (
+                <div key={prescription.id} className="col-md-12 mb-3">
+                  <div className="card">
+                    <div className="card-body">
+                      <h5 className="card-title">Edit Prescription</h5>
+                      
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Medication Name</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="medication_name"
+                            value={editFormData.medication_name}
+                            onChange={handleEditFormChange}
+                          />
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Dosage</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="dosage"
+                            value={editFormData.dosage}
+                            onChange={handleEditFormChange}
+                          />
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Frequency</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="frequency"
+                            value={editFormData.frequency}
+                            onChange={handleEditFormChange}
+                          />
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Duration</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="duration"
+                            value={editFormData.duration}
+                            onChange={handleEditFormChange}
+                          />
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Prescribed Date</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            name="prescribed_date"
+                            value={editFormData.prescribed_date}
+                            onChange={handleEditFormChange}
+                          />
+                        </div>
+
+                        <div className="col-md-12 mb-3">
+                          <label className="form-label">Instructions</label>
+                          <textarea
+                            className="form-control"
+                            name="instructions"
+                            value={editFormData.instructions}
+                            onChange={handleEditFormChange}
+                            rows="2"
+                          />
+                        </div>
+                      </div>
+
+                      <button 
+                        className="btn btn-primary me-2"
+                        onClick={handleSavePrescription}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : '💾 Save'}
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  )}
+                  </div>
+                </div>
+              );
+            }
+
+            // View mode
+            return (
+              <div key={prescription.id} className="col-md-6 mb-3">
+                <div className="card prescription-card">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <h5 className="card-title">{prescription.medication_name}</h5>
+                      <button 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleEditPrescription(prescription)}
+                      >
+                        ✏️
+                      </button>
+                    </div>
+                    
+                    <p className="card-text mb-1">
+                      <strong>{isPatient ? 'Doctor' : 'Patient'}:</strong>{' '}
+                      {isPatient ? prescription.doctor_name : prescription.patient_name}
+                    </p>
+                    
+                    {isPatient && prescription.specialization && (
+                      <p className="card-text mb-1">
+                        <strong>Specialization:</strong> {prescription.specialization}
+                      </p>
+                    )}
+                    
+                    {prescription.dosage && (
+                      <p className="card-text mb-1">
+                        <strong>Dosage:</strong> {prescription.dosage}
+                      </p>
+                    )}
+                    
+                    {prescription.frequency && (
+                      <p className="card-text mb-1">
+                        <strong>Frequency:</strong> {prescription.frequency}
+                      </p>
+                    )}
+                    
+                    {prescription.duration && (
+                      <p className="card-text mb-1">
+                        <strong>Duration:</strong> {prescription.duration}
+                      </p>
+                    )}
+                    
+                    <p className="card-text mb-1">
+                      <strong>Prescribed Date:</strong>{' '}
+                      {new Date(prescription.prescribed_date).toLocaleDateString()}
+                    </p>
+                    
+                    {prescription.instructions && (
+                      <div className="mt-2">
+                        <strong>Instructions:</strong>
+                        <p className="card-text">{prescription.instructions}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
