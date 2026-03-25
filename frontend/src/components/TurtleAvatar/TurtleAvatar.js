@@ -176,10 +176,66 @@ if (mood.level === "happy") {
   };
 
   // ==========================
+  // DAILY SUMMARY
+  // ==========================
+  const generateDailySummary = () => {
+    const stressNum = Number(stressScore) || 0;
+    const hrNum = Number(heartRate) || 0;
+    const stepsNum = Number(steps) || 0;
+    
+    let stressStatus = "Good 🌟";
+    if (stressNum > 80) stressStatus = "High 🔴";
+    else if (stressNum > 60) stressStatus = "Moderate 🟡";
+    else if (stressNum < 30) stressStatus = "Excellent 🟢";
+
+    let hrStatus = "Normal 💚";
+    if (hrNum > 120) hrStatus = "High ⚠️";
+    else if (hrNum > 100) hrStatus = "Elevated 🟡";
+    else if (hrNum < 60) hrStatus = "Low 💙";
+
+    let stepsStatus = "Good 👟";
+    if (stepsNum < 3000) stepsStatus = "Low 📉";
+    else if (stepsNum < 7000) stepsStatus = "Fair 📊";
+    else if (stepsNum >= 10000) stepsStatus = "Excellent 🎯";
+
+    return `📊 Today's Summary: Stress: ${stressStatus} | Heart: ${hrStatus} | Steps: ${stepsNum} (${stepsStatus})`;
+  };
+
+  // ==========================
+  // MONTHLY SUMMARY
+  // ==========================
+  const generateMonthlySummary = () => {
+    const stressNum = Number(stressScore) || 0;
+    const stepsNum = Number(steps) || 0;
+    
+    const predictedMonthlySteps = Math.round(stepsNum * 30);
+    const avgStress = stressNum; // Current as baseline
+    
+    let trend = "Keep going! 💪";
+    if (stressNum < 40) trend = "Amazing month ahead! 🌟";
+    else if (stressNum > 70) trend = "Focus on relaxation this month. 🧘";
+
+    return `📈 Monthly Outlook: Avg Stress ~${avgStress} | Est. Steps: ${predictedMonthlySteps.toLocaleString()} | ${trend}`;
+  };
+
+  // ==========================
   // INTELLIGENT QUESTION HANDLER
   // ==========================
   const generateSmartResponse = (question) => {
     const lowerQ = question.toLowerCase();
+    
+    // Daily Summary
+    if (lowerQ.match(/daily|today|summary|stats|overview|today'?s/)) {
+      if (lowerQ.match(/monthly|month|30 days/)) {
+        return generateMonthlySummary();
+      }
+      return generateDailySummary();
+    }
+    
+    // Monthly Summary
+    if (lowerQ.match(/monthly|month|30 days|this month|progress|month'?s/)) {
+      return generateMonthlySummary();
+    }
     
     // Water/Hydration related
     if (lowerQ.match(/water|hydrat|drink|thirst|quench|fluid/)) {
