@@ -3,8 +3,8 @@ import "./TurtleAvatar.css";
 
 function TurtleAvatar({ stressScore = 0, metrics = {}, className = "" }) {
   console.log("Stress score is:", stressScore);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState("");
+  const [userInput, setUserInput] = useState("");
 
   const heartRate = metrics?.heartRate;
   const steps = metrics?.steps;
@@ -78,26 +78,325 @@ if (mood.level === "happy") {
   mouthCurve = 78;
 }
 
-  const handleWaterQuestion = () => {
-    setSelectedAnswer(
-      `Based on ${steps || "N/A"} steps, aim for 2-3L of water today.`
-    );
+  // ==========================
+  // PERSONALIZED RECOMMENDATIONS
+  // ==========================
+  const generateWaterResponse = () => {
+    const stepsNum = Number(steps) || 0;
+    const activityLevel = stepsNum > 10000 ? "high" : stepsNum > 5000 ? "moderate" : "low";
+    
+    const responses = {
+      high: [
+        `With ${stepsNum} steps, you're very active! Drink 3-4 liters of water today. 💧`,
+        `${stepsNum} steps is awesome! Stay hydrated with 3.5 liters of water. 🏃`,
+        `You're crushing it with ${stepsNum} steps! Keep hydrated—3-4 liters needed. 💪`,
+      ],
+      moderate: [
+        `${stepsNum} steps—nice! Aim for 2.5-3 liters of water today. 💧`,
+        `Good activity level at ${stepsNum} steps. Drink about 2.5 liters to stay hydrated.`,
+        `You're doing well with ${stepsNum} steps. Keep yourself hydrated with 2-3 liters. 💚`,
+      ],
+      low: [
+        `${stepsNum} steps today. Drink at least 2 liters of water and move more! 🐢`,
+        `You're at ${stepsNum} steps. Stay hydrated with 2 liters and try to move around.`,
+        `${stepsNum} steps is a start! Drink water and consider a short walk. 🚶`,
+      ],
+    };
+    
+    const responseArray = responses[activityLevel];
+    return responseArray[Math.floor(Math.random() * responseArray.length)];
   };
 
-  const handleHeartRateQuestion = () => {
-    setSelectedAnswer(
-      `Heart rate: ${heartRate || "N/A"} bpm. High values can be caused by stress, exercise or caffeine.`
-    );
+  const generateHeartRateResponse = () => {
+    const hr = Number(heartRate) || 0;
+    
+    if (hr > 120) {
+      const responses = [
+        `Your heart rate is ${hr} bpm—slow down! Rest, breathe deeply, and drink water. 🧘`,
+        `${hr} bpm is high. Take a break and try some deep breathing exercises.`,
+        `Your heart is racing at ${hr} bpm. Relax and practice calm breathing. You're okay! 💚`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else if (hr > 100) {
+      const responses = [
+        `${hr} bpm is a bit elevated. You might be stressed. Take a few deep breaths.`,
+        `Your heart rate is ${hr} bpm. Try some relaxation—you're likely stressed or caffeinated.`,
+        `${hr} bpm is slightly high. Wind down and give yourself a break. 💨`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else if (hr > 80) {
+      const responses = [
+        `${hr} bpm is normal and healthy! You're doing great. 💓`,
+        `Your heart rate is ${hr} bpm—nice and normal. Keep it up!`,
+        `${hr} bpm is perfect. Your heart is happy! 💚`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else {
+      const responses = [
+        `${hr} bpm—wow! You're super calm and relaxed. Keep it up! 🧘`,
+        `Your heart rate is ${hr} bpm. You're in a very peaceful state. Amazing! ✨`,
+        `${hr} bpm is beautifully calm. You're doing perfectly well! 🌟`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
   };
 
-  const handleStressQuestion = () => {
-    setSelectedAnswer(
-      `Stress score: ${stressScore}. Try breathing exercises and short walks.`
-    );
+  const generateStressResponse = () => {
+    const stressNum = Number(stressScore) || 0;
+    
+    if (stressNum < 30) {
+      const responses = [
+        `Stress at ${stressNum}—you're crushing it! Stay calm and keep it up! 🌟`,
+        `${stressNum} stress score is amazing! You're thriving. 💪`,
+        `You're at ${stressNum}—phenomenal! Keep maintaining this peace. ✨`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else if (stressNum < 60) {
+      const responses = [
+        `${stressNum} is moderate and manageable. Try some meditation to lower it more. 🧘`,
+        `Stress at ${stressNum}—you're handling it well. Keep being steady! 💚`,
+        `You're at ${stressNum}. Try breathing exercises to bring it down even lower.`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else if (stressNum < 80) {
+      const responses = [
+        `${stressNum} is elevated. Take a walk, stretch, and breathe deeply. 🚶`,
+        `Stress at ${stressNum}—time to relax! Try yoga or stepping outside. 🧘`,
+        `You're carrying tension at ${stressNum}. Self-care time! Take a break. 💆`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else {
+      const responses = [
+        `${stressNum} is critical. Breathe deeply, walk outside, and reach out to someone. 🐢❤️`,
+        `Stress at ${stressNum}—please destress now. Meditate or talk to a friend.`,
+        `${stressNum} is too high. Take action now—breathe, move, and get support. You matter! 💚`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+  };
+
+  // ==========================
+  // INTELLIGENT QUESTION HANDLER
+  // ==========================
+  const generateSmartResponse = (question) => {
+    const lowerQ = question.toLowerCase();
+    
+    // Water/Hydration related
+    if (lowerQ.match(/water|hydrat|drink|thirst|quench|fluid/)) {
+      return generateWaterResponse();
+    }
+    
+    // Heart rate related
+    if (lowerQ.match(/heart|pulse|bpm|cardio|heartbeat|racing|pounding/)) {
+      return generateHeartRateResponse();
+    }
+    
+    // Stress related
+    if (lowerQ.match(/stress|anxious|tense|worry|nervous|calm|relax|peace|uptight|pressure/)) {
+      return generateStressResponse();
+    }
+    
+    // Sleep/Tiredness related
+    if (lowerQ.match(/sleep|rest|tired|fatigue|insomnia|nap|wake|sleepy|exhausted|doze|snooze/)) {
+      const responses = [
+        `Aim for 7-9 hours of sleep. Keep your room cool and dark, and avoid screens 30 minutes before bed! 😴`,
+        `Trouble sleeping? Try meditation, a warm bath, or some light stretching before bed.`,
+        `Your sleep schedule matters. Go to bed at the same time each night to help your body relax. 🛌`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Exercise/Activity/Movement related
+    if (lowerQ.match(/exercise|workout|active|activity|fitness|walk|run|gym|train|sport|move|movement/)) {
+      const stepsNum = Number(steps) || 0;
+      const responses = [
+        `Great! You're at ${stepsNum} steps. Aim for 10,000 daily. Even a 15-minute walk helps! 🏃`,
+        `Exercise for 30 minutes today. It'll boost your mood and lower stress. You can do it! 💪`,
+        `Try walking, dancing, yoga, or any activity you enjoy. The best exercise is the one you'll actually do! 🚶`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Food/Nutrition/Eating related
+    if (lowerQ.match(/food|eat|nutrition|diet|hungry|snack|meal|healthy|appetite|starving|breakfast|lunch|dinner/)) {
+      const responses = [
+        `Eat balanced meals with fruits, veggies, protein, and whole grains. Avoid too much sugar and caffeine. 🥗`,
+        `Eat when you're hungry, stop when you're full. And eat mindfully—put your phone away! 🍎`,
+        `Stay away from processed foods. Fresh, whole foods will give you better energy and mood. 🥕`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Headaches/Pain
+    if (lowerQ.match(/headache|head pain|migraine|ache|hurt|pain|sore|throbbing/)) {
+      const responses = [
+        `Drink water, rest in a quiet dark room, and try some deep breathing. If it persists, see a doctor. 💧`,
+        `Headaches often come from dehydration or stress. Hydrate and take a short break! 🧘`,
+        `Try a cold compress or massage your temples. Relax and let your body recover.`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Energy/Fatigue/Low mood
+    if (lowerQ.match(/energy|tired|low|fatigue|sluggish|unmotivated|sad|depressed|down|blue|lethargic|drained/)) {
+      const responses = [
+        `Low energy? Try moving your body, drink water, and get outside for some sunlight! ☀️`,
+        `Eat something nutritious and take a short walk. Movement and fresh air boost energy. 🚶`,
+        `Make sure you're sleeping enough. Poor sleep kills energy. Get those 8 hours! 😴`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Breathing exercises/Anxiety/Panic
+    if (lowerQ.match(/breath|breathing|anxiety|panic|overwhelm|overwhelmed|freaking|shortness|hyperventil/)) {
+      const responses = [
+        `Box breathing: In for 4, hold 4, out for 4, hold 4. Repeat 5 times. You'll feel calm! 🧘`,
+        `Slow, deep breaths through your nose. Count to 4 on the way in, 6 on the way out. 💨`,
+        `Breathe slowly and bring your awareness to your body. You're safe. It will pass. ✨`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Meditation/Mindfulness
+    if (lowerQ.match(/meditat|mindful|focus|concentrat|mental|mental health|mind|clear|clarity/)) {
+      const responses = [
+        `Start with 5 minutes daily. Sit quietly, focus on your breath. Let thoughts pass without judgment. 🧘‍♀️`,
+        `Try a body scan—focus on each body part from head to toe. Super grounding! 🌿`,
+        `Even 3 minutes of mindfulness helps. You'll feel clearer and calmer afterward. 🕉️`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Mood/Happiness
+    if (lowerQ.match(/mood|happy|sad|upset|irritable|grumpy|cranky|annoyed|frustrated/)) {
+      const responses = [
+        `Move your body—exercise is a mood booster! Even 10 minutes of walking helps. 🏃`,
+        `Spend time with people you love. Connection is powerful for your mood. 💚`,
+        `Your mood improves with sleep, exercise, and sunlight. Do one of these now! ☀️`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Motivation/Encouragement
+    if (lowerQ.match(/motivat|encour|support|struggling|difficult|hard|can't|cannot|help me|advice|tips/)) {
+      const responses = [
+        `You've got this! Small steps every day add up. Be proud of yourself! 💪`,
+        `Take it one day at a time. Some days are harder—that's normal. Keep going! 🌟`,
+        `You're doing great by checking in with me. Self-care is the first step! 💚`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // General wellness/How are you
+    if (lowerQ.match(/how.*feel|feeling|doing|health|well|okay|status|best|worst|metrics|measurement/)) {
+      const stressNum = Number(stressScore) || 0;
+      const hrNum = Number(heartRate) || 0;
+      
+      let assessment = "";
+      if (stressNum < 30 && hrNum < 100) {
+        assessment = "You're doing amazing! Stress is low and heart rate is steady. Keep it up! 🌟";
+      } else if (stressNum < 60 && hrNum < 100) {
+        assessment = "You're managing well! Everything looks balanced. Maybe take it easy today. 💚";
+      } else if (stressNum < 80) {
+        assessment = "You're a bit stressed. Try some breathing exercises or a walk to relax. 🧘";
+      } else {
+        assessment = "Your stress is high. Take a break now and do something calming for yourself. 🐢❤️";
+      }
+      
+      return assessment;
+    }
+
+    // Posture/Body/Physical complaints
+    if (lowerQ.match(/posture|back|neck|shoulder|sore|stiff|tension|ache|stretch|flexibility|sore muscles/)) {
+      const responses = [
+        `Stretch regularly! Try yoga or simple shoulder rolls. Fix your sitting posture too. 🧘`,
+        `Tension? Do some light stretching and massage the sore area. Heat can help too! 🔥`,
+        `Move around every hour. Sitting too long hurts your body. Stand up and stretch! 🚶`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Anxiety/Worry/Mental wellness
+    if (lowerQ.match(/worry|anxious|nervous|tension|stress|fear|concerned|scared|worried|apprehensive/)) {
+      const responses = [
+        `What you're feeling is valid. Practice deep breathing and remind yourself: this will pass. 💚`,
+        `Anxiety feeds on isolation. Talk to someone you trust or call a friend. 📞`,
+        `Channel that energy into action or exercise. Moving your body helps process worry. 💪`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Focus/Concentration/Brain fog
+    if (lowerQ.match(/focus|concentrat|brain fog|can't think|forgetful|confused|scatter|distract/)) {
+      const responses = [
+        `Hydrate and take a 10-minute walk. Brain fog often comes from dehydration. 💧`,
+        `Turn off notifications and work in 25-minute blocks. Your focus will improve quickly! ⏱️`,
+        `Eat a balanced snack and get some fresh air. Your brain needs oxygen and fuel! 🧠`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Hope/Future/Goals
+    if (lowerQ.match(/hope|future|goal|dream|hope|better|improve|change|transform|habit/)) {
+      const responses = [
+        `Every day is a fresh start! Set one small health goal for today and crush it! 🎯`,
+        `Change happens slowly. Be patient with yourself. You're already doing better by caring! 🌱`,
+        `Build habits one at a time. Start with one healthy behavior this week. You've got this! 💪`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Sickness/Illness/Feeling unwell
+    if (lowerQ.match(/sick|ill|cold|flu|fever|cough|sneeze|nausea|vomit|unwell|virus|ache|chills/)) {
+      const responses = [
+        `Rest, hydrate, and eat nutritious food. If it gets worse, see a doctor. Get well soon! 🏥`,
+        `Sleep is your best medicine right now. Give your body time to recover. 😴`,
+        `Drink lots of water and warm tea. Stay warm and avoid spreading it to others! 🍵`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Caffeine/Substances
+    if (lowerQ.match(/caffeine|coffee|energy drink|tea|soda|sugar|alcohol|cigarette|nicotine/)) {
+      const responses = [
+        `Limit caffeine after 2pm—it messes with sleep! Drink water instead for sustained energy. 💧`,
+        `Too much sugar causes energy crashes. Stick to whole foods for stable energy. 🥗`,
+        `Cut back gradually if you're on too much caffeine. Your body will thank you! ☕`,
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // Default response for anything else
+    const defaultResponses = [
+      `I'm here to help with your health! Ask about stress, exercise, sleep, nutrition, energy, or how you're feeling. What's on your mind? 💚`,
+      `Great question! Tell me more about your health and I'll do my best to help you out. 🐢`,
+      `I'm your wellness buddy! Ask me anything about feeling better. What can I help with today? 💪`,
+    ];
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+  };
+
+  const handleSendQuestion = () => {
+    if (!userInput.trim()) return;
+    
+    const response = generateSmartResponse(userInput);
+    setSelectedAnswer(response);
+    setUserInput("");
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSendQuestion();
+    }
   };
 
   return (
     <div className={`turtle-avatar-container ${className}`}>
+      {selectedAnswer && (
+        <div className="turtle-response-bubble">
+          {selectedAnswer}
+        </div>
+      )}
+      
       <button
         className={`turtle-avatar ${mood.level}`}
         style={{
@@ -108,7 +407,6 @@ if (mood.level === "happy") {
             0 0 60px ${mood.color}33
           `,
         }}
-        onClick={() => setIsDialogOpen(true)}
       >
         <svg viewBox="0 0 200 200" width="210" height="210">
 
@@ -198,24 +496,22 @@ if (mood.level === "happy") {
       </button>
 
       <div className="turtle-message" style={{ color: mood.color }}>
-        {selectedAnswer || mood.message}
+        {!selectedAnswer && mood.message}
       </div>
 
-      {isDialogOpen && (
-        <div className="turtle-dialog">
-          <button
-            onClick={() => {
-              setIsDialogOpen(false);
-              setSelectedAnswer("");
-            }}
-          >
-            Close
-          </button>
-          <button onClick={handleWaterQuestion}>Water intake?</button>
-          <button onClick={handleHeartRateQuestion}>Heart rate?</button>
-          <button onClick={handleStressQuestion}>Lower stress?</button>
-        </div>
-      )}
+      <div className="turtle-input-container">
+        <input
+          type="text"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Ask me anything..."
+          className="turtle-input"
+        />
+        <button onClick={handleSendQuestion} className="turtle-send-btn">
+          Send
+        </button>
+      </div>
     </div>
   );
 }

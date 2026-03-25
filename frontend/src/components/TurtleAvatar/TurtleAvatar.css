@@ -6,7 +6,8 @@
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
-  padding: 1.2rem;
+  padding: 2rem 1.2rem 1.2rem 1.2rem;
+  position: relative;
 }
 
 /* ==========================
@@ -105,26 +106,8 @@
 }
 
 /* ==========================
-   BUTTONS
+   BUTTONS (OLD - REMOVED)
 ========================== */
-.turtle-dialog button {
-  padding: 0.55rem 0.9rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 18px;
-  background: white;
-  color: #333;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-  margin: 0.3rem;
-}
-
-.turtle-dialog button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-  background: #f1f3f5;
-}
 
 /* ==========================
    MOUTH TRANSITION
@@ -212,4 +195,90 @@
 @keyframes shake {
   0% { transform: translateX(-3px); }
   100% { transform: translateX(3px); }
+}
+
+/* ==========================
+   RESPONSE BUBBLE (ABOVE HEAD)
+========================== */
+.turtle-response-bubble {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 2px solid #4CAF50;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  max-width: 280px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  color: #333;
+  animation: slideDown 0.3s ease-out;
+  z-index: 10;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ==========================
+   INPUT CONTAINER
+========================== */
+.turtle-input-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.turtle-input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.turtle-input:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+}
+
+.turtle-input::placeholder {
+  color: #999;
+}
+
+/* ==========================
+   SEND BUTTON
+========================== */
+.turtle-send-btn {
+  padding: 0.6rem 0.9rem;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.turtle-send-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.turtle-send-btn:active {
+  transform: translateY(0);
 }
