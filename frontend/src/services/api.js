@@ -75,4 +75,10 @@ export const sharingAPI = {
   disconnectProvider: (sharingId) => api.delete(`/sharing/${sharingId}/disconnect`)
 };
 
+// Thresholds API (Biometric Alert Thresholds)
+export const thresholdsAPI = {
+  getThresholds: () => api.get('/thresholds'),
+  updateThresholds: (thresholds) => api.put('/thresholds', thresholds)
+};
+
 export default api;

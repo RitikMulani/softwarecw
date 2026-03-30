@@ -42,6 +42,22 @@ export async function register(req, res) {
   try {
     const { email, password, name, role = 'user' } = req.body;
 
+    // Validate required fields
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: 'Email, password, and name are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
     // Check if user exists
     const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
 

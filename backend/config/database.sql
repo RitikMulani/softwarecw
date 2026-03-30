@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   date_of_birth DATE,
   gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other')),
   address TEXT,
+  points INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -123,6 +124,34 @@ CREATE TABLE IF NOT EXISTS sharing_requests (
 
 CREATE TRIGGER update_sharing_requests_updated_at BEFORE UPDATE ON sharing_requests
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Refresh Tokens (for token management and revocation)
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id UUID PRIMARY KEY,
+  user_id INT NOT NULL,
+  token TEXT NOT NULL,
+  revoked BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Device Readings (biometric data from smartwatches/devices)
+CREATE TABLE IF NOT EXISTS device_readings (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  heart_rate DECIMAL(5, 2),
+  blood_pressure_sys DECIMAL(5, 2),
+  blood_pressure_dia DECIMAL(5, 2),
+  spo2 DECIMAL(5, 2),
+  body_temp DECIMAL(5, 2),
+  hrv DECIMAL(5, 2),
+  steps INT,
+  is_anomaly BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_timestamp (user_id, created_at DESC)
+);
 
 -- Insert sample data
 -- Sample Doctors

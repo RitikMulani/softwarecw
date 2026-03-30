@@ -9,28 +9,4 @@ const router = express.Router();
  */
 router.put('/profile', authenticateToken, authController.updateProfile);
 
-/**
- * Get all doctors
- */
-router.get('/doctors', async (req, res) => {
-  // Placeholder - implement as needed
-  res.json({ doctors: [] });
-});
-
-/**
- * Get doctor by ID
- */
-router.get('/doctors/:id', async (req, res) => {
-  // Placeholder - implement as needed
-  res.json({ doctor: null });
-});
-
-/**
- * Get all patients
- */
-router.get('/patients', async (req, res) => {
-  // Placeholder - implement as needed
-  res.json({ patients: [] });
-});
-
 export default router;

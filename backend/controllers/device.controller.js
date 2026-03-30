@@ -24,29 +24,26 @@ export async function storeReading(req, res) {
     // Check if data contains anomalies (warnings)
     const isAnomaly = validation.isAnomaly;
 
-    // Store the reading in database (if your DB exists)
-    // For now, we'll just return success and store the data
-    const readingData = {
-      heart_rate,
-      blood_pressure_sys,
-      blood_pressure_dia,
-      spo2,
-      body_temp,
-      hrv,
-      steps,
-      is_anomaly: isAnomaly
-    };
-
-    // TODO: Insert into device_readings table when DB schema is ready
-    // const [result] = await db.query(
-    //   `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly)
-    //    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    //   [userId, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, isAnomaly]
-    // );
+    // Store the reading in database
+    const [result] = await db.query(
+      `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [userId, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, isAnomaly]
+    );
 
     res.status(201).json({
       message: 'Reading stored successfully',
-      data: readingData,
+      data: {
+        id: result[0]?.id,
+        heart_rate,
+        blood_pressure_sys,
+        blood_pressure_dia,
+        spo2,
+        body_temp,
+        hrv,
+        steps,
+        is_anomaly: isAnomaly
+      },
       isAnomalous: isAnomaly,
       warnings: validation.warnings
     });
@@ -63,26 +60,20 @@ export async function getLatestReading(req, res) {
   try {
     const userId = req.user.userId;
 
-    // TODO: Query from device_readings table when DB schema is ready
-    // const [reading] = await db.query(
-    //   `SELECT * FROM device_readings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
-    //   [userId]
-    // );
+    const [reading] = await db.query(
+      `SELECT * FROM device_readings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
 
-    // For now, return mock data
-    const mockReading = {
-      heart_rate: 72,
-      blood_pressure_sys: 120,
-      blood_pressure_dia: 80,
-      spo2: 98,
-      body_temp: 36.8,
-      hrv: 55,
-      steps: 8500,
-      created_at: new Date()
-    };
+    if (reading.length === 0) {
+      return res.json({
+        message: 'No readings found',
+        reading: null
+      });
+    }
 
     res.json({
-      reading: mockReading
+      reading: reading[0]
     });
   } catch (error) {
     console.error('Error fetching reading:', error);
@@ -98,21 +89,14 @@ export async function getReadingsWithValidation(req, res) {
     const userId = req.user.userId;
     const { days = 7 } = req.query;
 
-    // TODO: Query from device_readings table when DB schema is ready
-    // const [readings] = await db.query(
-    //   `SELECT * FROM device_readings 
-    //    WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-    //    ORDER BY created_at DESC`,
-    //   [userId, days]
-    // );
+    const [readings] = await db.query(
+      `SELECT * FROM device_readings 
+       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       ORDER BY created_at DESC`,
+      [userId, days]
+    );
 
-    // For now, return mock data with validation
-    const mockReadings = [
-      { heart_rate: 72, spo2: 98, steps: 8500, created_at: new Date(), is_valid: true },
-      { heart_rate: 1000, spo2: 98, steps: 8500, created_at: new Date(), is_valid: false, reason: 'Heart rate unrealistic' }
-    ];
-
-    const validatedReadings = mockReadings.map(reading => {
+    const validatedReadings = (readings || []).map(reading => {
       const validation = BiometricValidator.validateReading(reading);
       return {
         ...reading,
@@ -124,7 +108,7 @@ export async function getReadingsWithValidation(req, res) {
     });
 
     res.json({
-      readings: validatedReadings.filter(r => r.is_valid), // Only return valid readings
+      readings: validatedReadings.filter(r => r.is_valid),
       rejected: validatedReadings.filter(r => !r.is_valid),
       total: validatedReadings.length,
       validCount: validatedReadings.filter(r => r.is_valid).length,

@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { useAuth } from '../context/AuthContext';
 import TurtleAvatar from '../components/TurtleAvatar/TurtleAvatar';
-import { authAPI, usersAPI, sharingAPI } from '../services/api';
+import { authAPI, usersAPI, sharingAPI, thresholdsAPI } from '../services/api';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -39,39 +39,12 @@ function Dashboard() {
   const [hrvData] = useState([55, 58, 54, 56, 59, 57, 55, 58, 56, 59, 57, 55, 58, 56, 59, 57, 56, 58, 57, 55]);
   const [accessRequests, setAccessRequests] = useState([]);
   const [connectedProviders, setConnectedProviders] = useState([]);
+  const [biometricThresholds, setBiometricThresholds] = useState(null);
+  const [isEditingThresholds, setIsEditingThresholds] = useState(false);
+  const [thresholdFormData, setThresholdFormData] = useState({});
+  const [isSavingThresholds, setIsSavingThresholds] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [biometricAlerts, setBiometricAlerts] = useState([
-    {
-      id: 1,
-      type: 'anomaly',
-      metric: 'Heart Rate',
-      reading: 48,
-      status: 'Low',
-      message: 'Your heart rate is unusually low (48 bpm). This is lower than your typical range.',
-      timestamp: new Date(Date.now() - 3600000),
-      severity: 'warning'
-    },
-    {
-      id: 2,
-      type: 'anomaly',
-      metric: 'SpO2',
-      reading: 94,
-      status: 'Low',
-      message: 'Your oxygen saturation is lower than normal (94%). Normal range is 95-100%.',
-      timestamp: new Date(Date.now() - 7200000),
-      severity: 'warning'
-    },
-    {
-      id: 3,
-      type: 'alert',
-      metric: 'Heart Rate',
-      reading: 94,
-      status: 'High',
-      message: 'Your heart rate is elevated (194 bpm). Consider relaxing or consulting a doctor if this persists.',
-      timestamp: new Date(Date.now() - 7200000),
-      severity: 'warning'
-    }
-  ]);
+  const [biometricAlerts, setBiometricAlerts] = useState([]);
   
   const [leaderboard, setLeaderboard] = useState([]);
 
@@ -125,6 +98,9 @@ function Dashboard() {
 
     // Fetch points leaderboard data
     fetchPointsLeaderboard();
+
+    // Fetch biometric thresholds
+    fetchBiometricThresholds();
 
     return () => clearInterval(interval);
   }, []);
@@ -248,6 +224,135 @@ function Dashboard() {
         alert('Failed to remove provider access: ' + (error.response?.data?.message || error.message));
       }
     }
+  };
+
+  const fetchBiometricThresholds = async () => {
+    try {
+      const response = await thresholdsAPI.getThresholds();
+      setBiometricThresholds(response.data.thresholds);
+      setThresholdFormData(response.data.thresholds);
+      
+      // Calculate alerts based on current readings and thresholds
+      calculateDynamicAlerts(response.data.thresholds);
+    } catch (error) {
+      console.error('Error fetching thresholds:', error);
+    }
+  };
+
+  const calculateDynamicAlerts = (thresholds) => {
+    if (!thresholds) return;
+    
+    const alerts = [];
+    let alertId = 0;
+
+    // Check Heart Rate
+    if (heartRateData[heartRateData.length - 1]) {
+      const currentHR = Math.round(heartRateData[heartRateData.length - 1]);
+      if (thresholds.heart_rate_alert_above && currentHR > thresholds.heart_rate_alert_above) {
+        alerts.push({
+          id: alertId++,
+          type: 'alert',
+          metric: 'Heart Rate',
+          reading: currentHR,
+          status: 'High',
+          message: `Your heart rate is above your threshold (${currentHR} bpm > ${thresholds.heart_rate_alert_above} bpm)`,
+          timestamp: new Date(),
+          severity: 'warning'
+        });
+      } else if (thresholds.heart_rate_alert_below && currentHR < thresholds.heart_rate_alert_below) {
+        alerts.push({
+          id: alertId++,
+          type: 'alert',
+          metric: 'Heart Rate',
+          reading: currentHR,
+          status: 'Low',
+          message: `Your heart rate is below your threshold (${currentHR} bpm < ${thresholds.heart_rate_alert_below} bpm)`,
+          timestamp: new Date(),
+          severity: 'warning'
+        });
+      }
+    }
+
+    // Check Blood Pressure Systolic
+    if (bloodPressureData[bloodPressureData.length - 1]) {
+      const currentBPSys = bloodPressureData[bloodPressureData.length - 1];
+      if (thresholds.blood_pressure_sys_alert_above && currentBPSys > thresholds.blood_pressure_sys_alert_above) {
+        alerts.push({
+          id: alertId++,
+          type: 'alert',
+          metric: 'Blood Pressure (Systolic)',
+          reading: currentBPSys,
+          status: 'High',
+          message: `Your systolic pressure is above threshold (${currentBPSys} > ${thresholds.blood_pressure_sys_alert_above} mmHg)`,
+          timestamp: new Date(),
+          severity: 'warning'
+        });
+      }
+    }
+
+    // Check SpO2
+    if (o2Data[o2Data.length - 1]) {
+      const currentO2 = o2Data[o2Data.length - 1];
+      if (thresholds.spo2_alert_below && currentO2 < thresholds.spo2_alert_below) {
+        alerts.push({
+          id: alertId++,
+          type: 'alert',
+          metric: 'SpO2',
+          reading: currentO2,
+          status: 'Low',
+          message: `Your oxygen level is below threshold (${currentO2}% < ${thresholds.spo2_alert_below}%)`,
+          timestamp: new Date(),
+          severity: 'warning'
+        });
+      }
+    }
+
+    // Check Steps
+    if (thresholds.steps_alert_below && steps < thresholds.steps_alert_below) {
+      alerts.push({
+        id: alertId++,
+        type: 'alert',
+        metric: 'Steps',
+        reading: steps,
+        status: 'Low',
+        message: `Your step count is below your daily threshold (${steps} < ${thresholds.steps_alert_below} steps)`,
+        timestamp: new Date(),
+        severity: 'info'
+      });
+    }
+
+    setBiometricAlerts(alerts);
+  };
+
+  const handleEditThresholds = () => {
+    setThresholdFormData(biometricThresholds || {});
+    setIsEditingThresholds(true);
+  };
+
+  const handleThresholdChange = (e) => {
+    const { name, value } = e.target;
+    setThresholdFormData({
+      ...thresholdFormData,
+      [name]: value ? parseFloat(value) : null
+    });
+  };
+
+  const handleSaveThresholds = async () => {
+    setIsSavingThresholds(true);
+    try {
+      await thresholdsAPI.updateThresholds(thresholdFormData);
+      alert('Alert thresholds updated successfully!');
+      setBiometricThresholds(thresholdFormData);
+      calculateDynamicAlerts(thresholdFormData);
+      setIsEditingThresholds(false);
+    } catch (error) {
+      alert('Failed to update thresholds: ' + (error.response?.data?.message || error.message));
+    }
+    setIsSavingThresholds(false);
+  };
+
+  const handleCancelThresholdEdit = () => {
+    setIsEditingThresholds(false);
   };
 
   const getTrendArrow = (trend) => {
@@ -1092,6 +1197,299 @@ function Dashboard() {
             <div className="chart-container" style={{ height: '150px' }}>
               <Line data={createChartData(hrvData, '#9C27B0')} options={chartOptions} />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="dashboard-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h3 className="card-title mb-0">⚙️ Alert Thresholds</h3>
+              {!isEditingThresholds && (
+                <button 
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={handleEditThresholds}
+                >
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
+
+            {isEditingThresholds ? (
+              <div>
+                <p style={{ color: '#666', marginBottom: '1.5rem' }}>Set custom alert thresholds for your biometric readings. Leave blank to disable alerts for that metric.</p>
+                
+                <div className="row mb-4">
+                  {/* Heart Rate */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>❤️ Heart Rate (bpm)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="heart_rate_alert_above"
+                          value={thresholdFormData.heart_rate_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 120"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="heart_rate_alert_below"
+                          value={thresholdFormData.heart_rate_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Blood Pressure Systolic */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>🩸 Blood Pressure (mmHg)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="blood_pressure_sys_alert_above"
+                          value={thresholdFormData.blood_pressure_sys_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 140"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="blood_pressure_sys_alert_below"
+                          value={thresholdFormData.blood_pressure_sys_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 90"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Blood Pressure Diastolic */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>🩸 Blood Pressure - (mmHg)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="blood_pressure_dia_alert_above"
+                          value={thresholdFormData.blood_pressure_dia_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 90"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="blood_pressure_dia_alert_below"
+                          value={thresholdFormData.blood_pressure_dia_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 60"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SpO2 */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>💨 Oxygen Level - SpO2 (%)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="spo2_alert_above"
+                          value={thresholdFormData.spo2_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 100"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="spo2_alert_below"
+                          value={thresholdFormData.spo2_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 95"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body Temperature */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>🌡️ Body Temperature (°C)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="form-control"
+                          name="body_temp_alert_above"
+                          value={thresholdFormData.body_temp_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 38"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="form-control"
+                          name="body_temp_alert_below"
+                          value={thresholdFormData.body_temp_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 36"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Steps */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>👟 Steps (daily)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="steps_alert_above"
+                          value={thresholdFormData.steps_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 15000"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="steps_alert_below"
+                          value={thresholdFormData.steps_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 1000"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HRV */}
+                  <div className="col-md-6 mb-3">
+                    <label style={{ fontWeight: '600', color: '#333', marginBottom: '0.5rem', display: 'block' }}>💓 HRV (ms)</label>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if above</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="hrv_alert_above"
+                          value={thresholdFormData.hrv_alert_above || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 150"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', color: '#666' }}>Alert if below</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="hrv_alert_below"
+                          value={thresholdFormData.hrv_alert_below || ''}
+                          onChange={handleThresholdChange}
+                          placeholder="e.g., 20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSaveThresholds}
+                    disabled={isSavingThresholds}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none'
+                    }}
+                  >
+                    {isSavingThresholds ? '💾 Saving...' : '✓ Save Thresholds'}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleCancelThresholdEdit}
+                    disabled={isSavingThresholds}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {biometricThresholds ? (
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <div style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, marginBottom: '0.5rem', fontWeight: '600', color: '#333' }}>❤️ Heart Rate</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                          Alert: {biometricThresholds.heart_rate_alert_above ? `> ${biometricThresholds.heart_rate_alert_above}` : '—'} bpm or {biometricThresholds.heart_rate_alert_below ? `< ${biometricThresholds.heart_rate_alert_below}` : '—'} bpm
+                        </p>
+                      </div>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <div style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, marginBottom: '0.5rem', fontWeight: '600', color: '#333' }}>🩸 Blood Pressure</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                          Alert: {biometricThresholds.blood_pressure_sys_alert_above ? `> ${biometricThresholds.blood_pressure_sys_alert_above}` : '—'} mmHg or {biometricThresholds.blood_pressure_sys_alert_below ? `< ${biometricThresholds.blood_pressure_sys_alert_below}` : '—'} mmHg
+                        </p>
+                      </div>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <div style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, marginBottom: '0.5rem', fontWeight: '600', color: '#333' }}>💨 Oxygen Level (SpO2)</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                          Alert: {biometricThresholds.spo2_alert_below ? `< ${biometricThresholds.spo2_alert_below}%` : '—'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <div style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, marginBottom: '0.5rem', fontWeight: '600', color: '#333' }}>👟 Daily Steps</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                          Alert: {biometricThresholds.steps_alert_below ? `< ${biometricThresholds.steps_alert_below}` : '—'} steps
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ color: '#999', textAlign: 'center', padding: '2rem' }}>Loading your thresholds...</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
