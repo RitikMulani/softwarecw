@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import { useAuth } from '../context/AuthContext';
 import TurtleAvatar from '../components/TurtleAvatar/TurtleAvatar';
-import { authAPI, usersAPI } from '../services/api';
+import { authAPI, usersAPI, sharingAPI } from '../services/api';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -39,6 +39,7 @@ function Dashboard() {
   const [stepsData] = useState([100, 500, 1200, 2100, 3400, 4200, 5100, 5900, 6800, 7200, 7800, 8200, 8500]);
   const [hrvData] = useState([55, 58, 54, 56, 59, 57, 55, 58, 56, 59, 57, 55, 58, 56, 59, 57, 56, 58, 57, 55]);
   const [accessRequests, setAccessRequests] = useState([]);
+  const [connectedProviders, setConnectedProviders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [biometricAlerts, setBiometricAlerts] = useState([
     {
@@ -762,6 +763,9 @@ function Dashboard() {
 
     // Fetch access requests
     fetchAccessRequests();
+
+    // Fetch connected providers
+    fetchConnectedProviders();
     
     // Fetch profile data
     fetchProfileData();
@@ -873,6 +877,27 @@ function Dashboard() {
       alert('Failed to reject request');
     }
     setLoading(false);
+  };
+
+  const fetchConnectedProviders = async () => {
+    try {
+      const response = await sharingAPI.getMyProviders();
+      setConnectedProviders(response.data.providers || []);
+    } catch (error) {
+      console.error('Error fetching connected providers:', error);
+    }
+  };
+
+  const handleDisconnectProvider = async (sharingId, providerName) => {
+    if (window.confirm(`Are you sure you want to remove access for ${providerName}? They will no longer be able to view your health data.`)) {
+      try {
+        await sharingAPI.disconnectProvider(sharingId);
+        alert('Healthcare provider access removed successfully!');
+        fetchConnectedProviders();
+      } catch (error) {
+        alert('Failed to remove provider access: ' + (error.response?.data?.message || error.message));
+      }
+    }
   };
 
   const getTrendArrow = (trend) => {
@@ -2149,6 +2174,23 @@ function Dashboard() {
               )}
             </button>
             <button
+              onClick={() => setActiveView('providers')}
+              style={{
+                width: '100%',
+                padding: '1rem 2rem',
+                background: activeView === 'providers' ? '#667eea' : 'transparent',
+                color: activeView === 'providers' ? 'white' : '#333',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500',
+                transition: 'all 0.2s'
+              }}
+            >
+              👨‍⚕️ Connected Providers
+            </button>
+            <button
               onClick={() => setActiveView('smartwatch')}
               style={{
                 width: '100%',
@@ -2457,6 +2499,81 @@ function Dashboard() {
                   </div>
                 )}
               </div>
+            </>
+          )}
+          {activeView === 'providers' && (
+            <>
+              <h2 style={{ marginBottom: '2rem' }}>👨‍⚕️ Connected Healthcare Providers</h2>
+
+              {connectedProviders.length > 0 ? (
+                <div className="row">
+                  {connectedProviders.map((provider) => (
+                    <div key={provider.sharing_id} className="col-md-6 mb-4">
+                      <div className="dashboard-card" style={{ borderLeft: '4px solid #667eea' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.5rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: '#333', fontSize: '1.2rem' }}>
+                              👨‍⚕️ {provider.name}
+                            </h4>
+                            <p style={{ margin: '0 0 0.75rem 0', color: '#666', fontSize: '0.95rem' }}>
+                              <strong>Email:</strong> {provider.email}
+                            </p>
+                            {provider.phone && (
+                              <p style={{ margin: '0 0 0.75rem 0', color: '#666', fontSize: '0.95rem' }}>
+                                <strong>Phone:</strong> {provider.phone}
+                              </p>
+                            )}
+                            <p style={{ margin: '0', color: '#999', fontSize: '0.85rem' }}>
+                              Connected since: {new Date(provider.connected_since).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div style={{ 
+                          background: '#E8F5E9', 
+                          padding: '0.75rem', 
+                          borderRadius: '8px',
+                          marginBottom: '1rem',
+                          borderLeft: '3px solid #4CAF50'
+                        }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#2E7D32', lineHeight: '1.5' }}>
+                            ✓ This provider has access to your health data and medical records.
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => handleDisconnectProvider(provider.sharing_id, provider.name)}
+                          style={{
+                            width: '100%',
+                            background: '#F44336',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '0.95rem',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#D32F2F'}
+                          onMouseLeave={(e) => e.target.style.background = '#F44336'}
+                        >
+                          🔗 Remove Access
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashboard-card" style={{ textAlign: 'center', padding: '3rem', background: '#F5F5F5' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👨‍⚕️</div>
+                  <h3 style={{ color: '#666', marginBottom: '0.5rem' }}>No Connected Providers</h3>
+                  <p style={{ color: '#999', margin: 0, lineHeight: '1.6' }}>
+                    You haven't connected any healthcare providers yet. When a provider requests access to your health data, 
+                    you'll be able to approve them in the <strong>Notifications</strong> tab. Once approved, they will appear here.
+                  </p>
+                </div>
+              )}
             </>
           )}
           {activeView === 'smartwatch' && (

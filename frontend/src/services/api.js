@@ -69,4 +69,10 @@ export const medicalRecordsAPI = {
   deleteMedicalRecord: (id) => api.delete(`/medical-records/${id}`)
 };
 
+// Sharing API (Doctor-Patient Access)
+export const sharingAPI = {
+  getMyProviders: () => api.get('/sharing/my-providers'),
+  disconnectProvider: (sharingId) => api.delete(`/sharing/${sharingId}/disconnect`)
+};
+
 export default api;

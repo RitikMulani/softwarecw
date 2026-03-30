@@ -212,4 +212,62 @@ router.get('/all-patients', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Patient gets list of connected healthcare providers
+ * GET /api/sharing/my-providers
+ */
+router.get('/my-providers', authenticateToken, async (req, res) => {
+  try {
+    const patientId = req.user.userId;
+
+    const [providers] = await db.query(
+      `SELECT 
+        u.id, u.full_name as name, u.email, u.phone,
+        sr.id as sharing_id, sr.status, sr.created_at as connected_since
+       FROM sharing_requests sr
+       JOIN users u ON sr.doctor_id = u.id
+       WHERE sr.patient_id = ? AND sr.status = 'accepted'
+       ORDER BY sr.created_at DESC`,
+      [patientId]
+    );
+
+    res.json({ providers });
+  } catch (error) {
+    console.error('Get providers error:', error);
+    res.status(500).json({ message: 'Error fetching providers', error: error.message });
+  }
+});
+
+/**
+ * Patient disconnects from a healthcare provider
+ * DELETE /api/sharing/:sharingId/disconnect
+ */
+router.delete('/:sharingId/disconnect', authenticateToken, async (req, res) => {
+  try {
+    const { sharingId } = req.params;
+    const patientId = req.user.userId;
+
+    // Verify the patient owns this sharing request
+    const [sharing] = await db.query(
+      'SELECT * FROM sharing_requests WHERE id = ? AND patient_id = ?',
+      [sharingId, patientId]
+    );
+
+    if (sharing.length === 0) {
+      return res.status(404).json({ message: 'Sharing request not found or not authorized' });
+    }
+
+    // Delete the sharing request
+    await db.query(
+      'DELETE FROM sharing_requests WHERE id = ?',
+      [sharingId]
+    );
+
+    res.json({ message: 'Successfully disconnected from healthcare provider', success: true });
+  } catch (error) {
+    console.error('Disconnect provider error:', error);
+    res.status(500).json({ message: 'Error disconnecting from provider', error: error.message });
+  }
+});
+
 export default router;
