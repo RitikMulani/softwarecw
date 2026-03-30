@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
+import jsPDF from 'jspdf';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -100,6 +101,655 @@ function Dashboard() {
   const handleEmergencyCall = () => {
     alert('Emergency services have been notified! Help is on the way.\n\nEmergency Contact: (911)\nYour location has been shared.');
     setShowEmergencyModal(false);
+  };
+
+  const handleExportBiometrics = () => {
+    alert('Please select a specific metric to export!');
+  };
+
+  // Heart Rate Export
+  const exportHeartRate = () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    // Header
+    doc.setFillColor(108, 99, 255);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('❤️ Heart Rate Report', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Detailed Analysis & Trends', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    // Current Reading
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(108, 99, 255);
+    doc.text('Current Reading', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Current Heart Rate: ${Math.round(heartRateData[heartRateData.length - 1])} bpm`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Time: ${new Date().toLocaleTimeString()}`, 21, yPosition);
+    yPosition += 6;
+    const hrStatus = getHeartRateStatus(Math.round(heartRateData[heartRateData.length - 1]));
+    doc.text(`Status: ${hrStatus.status}`, 21, yPosition);
+    yPosition += 12;
+
+    // Statistics
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(108, 99, 255);
+    doc.text('Statistics', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    
+    const avgHR = Math.round(heartRateData.reduce((a, b) => a + b) / heartRateData.length);
+    const maxHR = Math.max(...heartRateData);
+    const minHR = Math.min(...heartRateData);
+
+    doc.text(`Weekly Average: ${avgHR} bpm`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Highest Reading: ${maxHR} bpm`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Lowest Reading: ${minHR} bpm`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Variation: ${maxHR - minHR} bpm`, 21, yPosition);
+    yPosition += 12;
+
+    // Detailed Data
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(108, 99, 255);
+    doc.text('Daily Data', 15, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    heartRateData.forEach((reading, idx) => {
+      doc.text(`Day ${idx + 1}: ${Math.round(reading)} bpm`, 21, yPosition);
+      yPosition += 5;
+      if (yPosition > 240) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
+
+    yPosition += 5;
+
+    // Normal Range Reference
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(227, 242, 253);
+    doc.rect(15, yPosition - 4, 180, 25, 'F');
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(21, 101, 192);
+    doc.text('📚 Reference Information', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('Normal Resting Heart Rate: 60-100 bpm', 21, yPosition);
+    yPosition += 5;
+    doc.text('Elevated: 100-120 bpm | High: >120 bpm', 21, yPosition);
+    yPosition += 5;
+    doc.text('Lower is generally better for resting heart rate', 21, yPosition);
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`Heart_Rate_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Heart Rate report exported!');
+  };
+
+  // Blood Pressure Export
+  const exportBloodPressure = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    doc.setFillColor(233, 30, 99);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('🩸 Blood Pressure Report', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Detailed Analysis & Trends', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(233, 30, 99);
+    doc.text('Current Reading', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Current BP: ${bloodPressure} mmHg`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Time: ${new Date().toLocaleTimeString()}`, 21, yPosition);
+    yPosition += 6;
+    const bpStatus = getBloodPressureStatus(bloodPressure);
+    doc.text(`Status: ${bpStatus.status}`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(233, 30, 99);
+    doc.text('Statistics', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    const avgBP = Math.round(bloodPressureData.reduce((a, b) => a + b) / bloodPressureData.length);
+    const maxBP = Math.max(...bloodPressureData);
+    const minBP = Math.min(...bloodPressureData);
+
+    doc.text(`Weekly Average: ${avgBP}/80 mmHg`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Highest: ${maxBP}/80 mmHg`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Lowest: ${minBP}/80 mmHg`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Variation: ${maxBP - minBP} mmHg`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(233, 30, 99);
+    doc.text('Daily Data', 15, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    bloodPressureData.forEach((reading, idx) => {
+      doc.text(`Day ${idx + 1}: ${Math.round(reading)}/80 mmHg`, 21, yPosition);
+      yPosition += 5;
+      if (yPosition > 240) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
+
+    yPosition += 10;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(255, 235, 238);
+    doc.rect(15, yPosition - 4, 180, 30, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(194, 24, 91);
+    doc.text('📚 Reference Information', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('Normal: Less than 120/80 mmHg', 21, yPosition);
+    yPosition += 5;
+    doc.text('Elevated: 120/80 - 129/<80 | High: ≥130/80', 21, yPosition);
+    yPosition += 5;
+    doc.text('Systolic (top) measures pressure when heart beats', 21, yPosition);
+    yPosition += 5;
+    doc.text('Diastolic (bottom) measures pressure at rest', 21, yPosition);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`Blood_Pressure_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Blood Pressure report exported!');
+  };
+
+  // Steps Export
+  const exportSteps = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    doc.setFillColor(255, 152, 0);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('👟 Daily Steps Report', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Activity & Movement Analysis', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 152, 0);
+    doc.text('Today\'s Activity', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Steps: ${steps} steps`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Goal: 10,000 steps`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Progress: ${Math.round((steps / 10000) * 100)}%`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 152, 0);
+    doc.text('Statistics', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    const avgSteps = Math.round(stepsData.reduce((a, b) => a + b) / stepsData.length);
+    const maxSteps = Math.max(...stepsData);
+    const totalSteps = stepsData.reduce((a, b) => a + b);
+
+    doc.text(`Daily Average: ${avgSteps} steps`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Best Day: ${maxSteps} steps`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Total This Week: ${totalSteps.toLocaleString()} steps`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Estimated Monthly: ${Math.round(steps * 30).toLocaleString()} steps`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 152, 0);
+    doc.text('Daily Breakdown', 15, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    stepsData.forEach((steps, idx) => {
+      const status = steps >= 10000 ? '✓' : steps >= 7000 ? '→' : '!';
+      doc.text(`Day ${idx + 1}: ${Math.round(steps)} steps ${status}`, 21, yPosition);
+      yPosition += 5;
+      if (yPosition > 240) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
+
+    yPosition += 10;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(255, 243, 224);
+    doc.rect(15, yPosition - 4, 180, 25, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(230, 124, 16);
+    doc.text('📚 Activity Recommendations', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('Aim for 10,000 steps daily • Light: <5,000 steps', 21, yPosition);
+    yPosition += 5;
+    doc.text('Moderate: 5,000-7,499 • Active: 7,500-10,000', 21, yPosition);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`Steps_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Steps report exported!');
+  };
+
+  // Oxygen Level Export
+  const exportOxygen = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    doc.setFillColor(76, 175, 80);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('💨 Oxygen Level Report', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('SpO2 Analysis & Respiratory Health', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(76, 175, 80);
+    doc.text('Current Reading', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Current SpO2: ${o2Level}%`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Time: ${new Date().toLocaleTimeString()}`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Status: ${o2Level >= 95 ? 'Normal' : 'Low'}`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(76, 175, 80);
+    doc.text('Statistics', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    const avgO2 = Math.round(o2Data.reduce((a, b) => a + b) / o2Data.length);
+
+    doc.text(`Weekly Average: ${avgO2}%`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Highest: ${Math.max(...o2Data)}%`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Lowest: ${Math.min(...o2Data)}%`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(76, 175, 80);
+    doc.text('Daily SpO2 Readings', 15, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    o2Data.forEach((reading, idx) => {
+      doc.text(`Day ${idx + 1}: ${Math.round(reading)}%`, 21, yPosition);
+      yPosition += 5;
+      if (yPosition > 240) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
+
+    yPosition += 10;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(232, 245, 233);
+    doc.rect(15, yPosition - 4, 180, 30, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(27, 94, 32);
+    doc.text('📚 Reference Information', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('Normal SpO2 (at sea level): 95-100%', 21, yPosition);
+    yPosition += 5;
+    doc.text('Acceptable: 90-94% | Low: <90%', 21, yPosition);
+    yPosition += 5;
+    doc.text('SpO2 measures oxygen saturation in blood', 21, yPosition);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`Oxygen_Level_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Oxygen Level report exported!');
+  };
+
+  // HRV Export
+  const exportHRV = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    doc.setFillColor(156, 39, 176);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('💓 HRV Report', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Heart Rate Variability Analysis', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(156, 39, 176);
+    doc.text('Current HRV', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Current HRV: ${hrv} ms`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Time: ${new Date().toLocaleTimeString()}`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Status: ${hrv > 50 ? 'Good Recovery' : 'Moderate'}`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(156, 39, 176);
+    doc.text('Statistics', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    const avgHRV = Math.round(hrvData.reduce((a, b) => a + b) / hrvData.length);
+    const maxHRV = Math.max(...hrvData);
+    const minHRV = Math.min(...hrvData);
+
+    doc.text(`Weekly Average: ${avgHRV} ms`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Highest: ${maxHRV} ms`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Lowest: ${minHRV} ms`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(156, 39, 176);
+    doc.text('Daily HRV Data', 15, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    hrvData.forEach((hrv, idx) => {
+      doc.text(`Day ${idx + 1}: ${Math.round(hrv)} ms`, 21, yPosition);
+      yPosition += 5;
+      if (yPosition > 240) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
+
+    yPosition += 10;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(243, 229, 245);
+    doc.rect(15, yPosition - 4, 180, 35, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(106, 27, 154);
+    doc.text('📚 What is HRV?', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('HRV measures variation between heartbeats', 21, yPosition);
+    yPosition += 5;
+    doc.text('Higher HRV = Better recovery & cardiovascular fitness', 21, yPosition);
+    yPosition += 5;
+    doc.text('Lower HRV = May indicate stress or fatigue', 21, yPosition);
+    yPosition += 5;
+    doc.text('Optimal range varies by age and fitness level', 21, yPosition);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`HRV_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ HRV report exported!');
+  };
+
+  // Stress Level Export
+  const exportStress = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    doc.setFillColor(244, 67, 54);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('😰 Stress Level Report', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Mental & Physical Stress Analysis', pageWidth / 2, 25, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    yPosition = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(244, 67, 54);
+    doc.text('Current Stress Level', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Stress Score: ${stressScore}/100`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Level: ${stressLevel}`, 21, yPosition);
+    yPosition += 6;
+    doc.text(`Status: ${stressScore > 70 ? '⚠️  Critical' : stressScore > 50 ? '⚡ Moderate' : '✓ Good'}`, 21, yPosition);
+    yPosition += 12;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(244, 67, 54);
+    doc.text('Wellness Recommendations', 15, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+
+    const stressRecs = [
+      '✓ Practice deep breathing exercises (5-10 min daily)',
+      '✓ Meditate to reduce mental stress',
+      '✓ Get 7-9 hours of quality sleep',
+      '✓ Exercise regularly (30 min minimum)',
+      '✓ Limit caffeine and stimulants',
+      '✓ Spend time in nature or outdoors',
+      '✓ Maintain healthy work-life balance',
+      '✓ Talk to friends and family',
+      '✓ Practice yoga or stretching'
+    ];
+
+    stressRecs.forEach(rec => {
+      doc.text(rec, 21, yPosition);
+      yPosition += 6;
+    });
+
+    yPosition += 10;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFillColor(255, 235, 238);
+    doc.rect(15, yPosition - 4, 180, 35, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(194, 24, 91);
+    doc.text('📚 Stress Level Guide', 18, yPosition + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    yPosition += 8;
+    doc.text('0-30: Excellent - You\'re in great shape mentally', 21, yPosition);
+    yPosition += 5;
+    doc.text('31-50: Good - Continue healthy habits', 21, yPosition);
+    yPosition += 5;
+    doc.text('51-70: Moderate - Time for more self-care', 21, yPosition);
+    yPosition += 5;
+    doc.text('71-100: High - Please seek stress reduction methods', 21, yPosition);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    doc.save(`Stress_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Stress report exported!');
   };
 
   useEffect(() => {
@@ -797,7 +1447,27 @@ function Dashboard() {
       <div className="row mb-4">
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowHeartRateDetails(!showHeartRateDetails)}>
-            <h3 className="card-title mb-3">❤️ Heart Rate {showHeartRateDetails && '▼'}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">❤️ Heart Rate {showHeartRateDetails && '▼'}</h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); exportHeartRate(); }}
+                style={{
+                  background: '#6C63FF',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#5548d6'}
+                onMouseOut={(e) => e.target.style.background = '#6C63FF'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: '#6C63FF' }}>{Math.round(heartRateData[heartRateData.length - 1])}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>bpm</span>
@@ -855,7 +1525,27 @@ function Dashboard() {
 
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowBloodPressureDetails(!showBloodPressureDetails)}>
-            <h3 className="card-title mb-3">🩸 Blood Pressure {showBloodPressureDetails && '▼'}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">🩸 Blood Pressure {showBloodPressureDetails && '▼'}</h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); exportBloodPressure(); }}
+                style={{
+                  background: '#E91E63',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#c2185b'}
+                onMouseOut={(e) => e.target.style.background = '#E91E63'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: '#E91E63' }}>{bloodPressure}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>mmHg</span>
@@ -915,7 +1605,27 @@ function Dashboard() {
       <div className="row mb-4">
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowO2Details(!showO2Details)}>
-            <h3 className="card-title mb-3">💨 Oxygen Level {showO2Details && '▼'}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">💨 Oxygen Level {showO2Details && '▼'}</h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); exportOxygen(); }}
+                style={{
+                  background: '#00BCD4',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#0097a7'}
+                onMouseOut={(e) => e.target.style.background = '#00BCD4'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: '#00BCD4' }}>{o2Level}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>%</span>
@@ -973,7 +1683,27 @@ function Dashboard() {
 
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowStepsDetails(!showStepsDetails)}>
-            <h3 className="card-title mb-3">👟 Steps {showStepsDetails && '▼'}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">👟 Steps {showStepsDetails && '▼'}</h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); exportSteps(); }}
+                style={{
+                  background: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#388e3c'}
+                onMouseOut={(e) => e.target.style.background = '#4CAF50'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: '#4CAF50' }}>{steps.toLocaleString()}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>/ 10,000</span>
@@ -1038,7 +1768,27 @@ function Dashboard() {
       <div className="row mb-4">
         <div className="col-md-6 mb-4">
           <div className="dashboard-card">
-            <h3 className="card-title mb-3">😰 Stress Level</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">😰 Stress Level</h3>
+              <button
+                onClick={exportStress}
+                style={{
+                  background: '#F44336',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#d32f2f'}
+                onMouseOut={(e) => e.target.style.background = '#F44336'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: stressColor }}>{stressScore}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>/ 100</span>
@@ -1059,7 +1809,27 @@ function Dashboard() {
 
         <div className="col-md-6 mb-4">
           <div className="dashboard-card">
-            <h3 className="card-title mb-3">💓 HRV (Heart Rate Variability)</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 className="card-title mb-0">💓 HRV (Heart Rate Variability)</h3>
+              <button
+                onClick={exportHRV}
+                style={{
+                  background: '#9C27B0',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#7b1fa2'}
+                onMouseOut={(e) => e.target.style.background = '#9C27B0'}
+              >
+                📥 Export
+              </button>
+            </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <strong style={{ fontSize: '2.5rem', color: '#9C27B0' }}>{hrv}</strong>
               <span style={{ fontSize: '1.2rem', color: '#666', marginLeft: '0.5rem' }}>ms</span>
@@ -1069,6 +1839,37 @@ function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <button
+          onClick={handleExportBiometrics}
+          style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 32px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            borderRadius: '25px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+            transition: 'all 0.3s ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+          }}
+        >
+          📥 Export Summary
+        </button>
       </div>
     </>
   );
