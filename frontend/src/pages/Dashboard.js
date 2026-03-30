@@ -123,7 +123,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('🐢 TurtleHealth', pageWidth / 2, 15, { align: 'center' });
+    doc.text('TurtleHealth', pageWidth / 2, 15, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
@@ -147,7 +147,7 @@ function Dashboard() {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(102, 126, 234);
-    doc.text('📊 CURRENT METRICS', 15, yPosition);
+    doc.text('CURRENT METRICS', 15, yPosition);
     yPosition += 10;
 
     doc.setTextColor(0, 0, 0);
@@ -155,12 +155,12 @@ function Dashboard() {
     doc.setFont(undefined, 'normal');
 
     const metrics = [
-      { label: '❤️  Heart Rate', value: `${heartRate} bpm`, color: [108, 99, 255] },
-      { label: '🩸 Blood Pressure', value: `${bloodPressure} mmHg`, color: [233, 30, 99] },
-      { label: '💨 Oxygen Level (SpO2)', value: `${o2Level}%`, color: [76, 175, 80] },
-      { label: '👟 Daily Steps', value: `${steps}`, color: [255, 152, 0] },
-      { label: '💓 HRV', value: `${hrv} ms`, color: [156, 39, 176] },
-      { label: '😰 Stress Level', value: `${stressLevel} (Score: ${stressScore})`, color: [244, 67, 54] }
+      { label: 'Heart Rate', value: `${heartRate} bpm`, color: [108, 99, 255] },
+      { label: 'Blood Pressure', value: `${bloodPressure} mmHg`, color: [233, 30, 99] },
+      { label: 'Oxygen Level (SpO2)', value: `${o2Level}%`, color: [76, 175, 80] },
+      { label: 'Daily Steps', value: `${steps}`, color: [255, 152, 0] },
+      { label: 'HRV', value: `${hrv} ms`, color: [156, 39, 176] },
+      { label: 'Stress Level', value: `${stressLevel} (Score: ${stressScore})`, color: [244, 67, 54] }
     ];
 
     metrics.forEach(metric => {
@@ -184,7 +184,7 @@ function Dashboard() {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(102, 126, 234);
-    doc.text('📈 WEEKLY AVERAGES', 15, yPosition);
+    doc.text('WEEKLY AVERAGES', 15, yPosition);
     yPosition += 10;
 
     doc.setTextColor(0, 0, 0);
@@ -209,7 +209,7 @@ function Dashboard() {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(102, 126, 234);
-    doc.text('📋 MONTHLY STATISTICS', 15, yPosition);
+    doc.text('MONTHLY STATISTICS', 15, yPosition);
     yPosition += 10;
 
     doc.setTextColor(0, 0, 0);
@@ -233,7 +233,7 @@ function Dashboard() {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(102, 126, 234);
-    doc.text('✅ HEALTH STATUS', 15, yPosition);
+    doc.text('HEALTH STATUS', 15, yPosition);
     yPosition += 10;
 
     doc.setTextColor(0, 0, 0);
@@ -241,10 +241,10 @@ function Dashboard() {
     doc.setFont(undefined, 'normal');
 
     const healthStatus = [
-      { status: `Heart Rate: ${heartRate > 100 ? '⚠️  Elevated' : '✓ Normal'}`, ok: heartRate <= 100 },
-      { status: `Blood Pressure: ${parseInt(bloodPressure) > 140 ? '⚠️  High' : '✓ Normal'}`, ok: parseInt(bloodPressure) <= 140 },
-      { status: `Oxygen Level: ${o2Level < 95 ? '⚠️  Low' : '✓ Normal'}`, ok: o2Level >= 95 },
-      { status: `Stress Levels: ${stressScore > 70 ? '⚠️  High' : stressScore > 50 ? '⚡ Moderate' : '✓ Good'}`, ok: stressScore <= 70 }
+      { status: `Heart Rate: ${heartRate > 100 ? 'Elevated' : 'Normal'}`, ok: heartRate <= 100 },
+      { status: `Blood Pressure: ${parseInt(bloodPressure) > 140 ? 'High' : 'Normal'}`, ok: parseInt(bloodPressure) <= 140 },
+      { status: `Oxygen Level: ${o2Level < 95 ? 'Low' : 'Normal'}`, ok: o2Level >= 95 },
+      { status: `Stress Levels: ${stressScore > 70 ? 'High' : stressScore > 50 ? 'Moderate' : 'Good'}`, ok: stressScore <= 70 }
     ];
 
     healthStatus.forEach(item => {
@@ -266,7 +266,7 @@ function Dashboard() {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(102, 126, 234);
-    doc.text('💡 WELLNESS RECOMMENDATIONS', 15, yPosition);
+    doc.text('WELLNESS RECOMMENDATIONS', 15, yPosition);
     yPosition += 10;
 
     doc.setTextColor(0, 0, 0);
@@ -321,7 +321,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('❤️ Heart Rate Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Heart Rate Report', pageWidth / 2, 15, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
@@ -406,7 +406,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(21, 101, 192);
-    doc.text('📚 Reference Information', 18, yPosition + 2);
+    doc.text('Reference Information', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -438,7 +438,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('🩸 Blood Pressure Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Blood Pressure Report', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.text('Detailed Analysis & Trends', pageWidth / 2, 25, { align: 'center' });
@@ -515,7 +515,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(194, 24, 91);
-    doc.text('📚 Reference Information', 18, yPosition + 2);
+    doc.text('Reference Information', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -548,7 +548,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('👟 Daily Steps Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Daily Steps Report', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.text('Activity & Movement Analysis', pageWidth / 2, 25, { align: 'center' });
@@ -625,7 +625,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(230, 124, 16);
-    doc.text('📚 Activity Recommendations', 18, yPosition + 2);
+    doc.text('Activity Recommendations', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -654,7 +654,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('💨 Oxygen Level Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Oxygen Level Report', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.text('SpO2 Analysis & Respiratory Health', pageWidth / 2, 25, { align: 'center' });
@@ -726,7 +726,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(27, 94, 32);
-    doc.text('📚 Reference Information', 18, yPosition + 2);
+    doc.text('Reference Information', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -757,7 +757,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('💓 HRV Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('HRV Report', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.text('Heart Rate Variability Analysis', pageWidth / 2, 25, { align: 'center' });
@@ -831,7 +831,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(106, 27, 154);
-    doc.text('📚 What is HRV?', 18, yPosition + 2);
+    doc.text('What is HRV?', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -864,7 +864,7 @@ function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont(undefined, 'bold');
-    doc.text('😰 Stress Level Report', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Stress Level Report', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.text('Mental & Physical Stress Analysis', pageWidth / 2, 25, { align: 'center' });
@@ -926,7 +926,7 @@ function Dashboard() {
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(194, 24, 91);
-    doc.text('📚 Stress Level Guide', 18, yPosition + 2);
+    doc.text('Stress Level Guide', 18, yPosition + 2);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -1667,7 +1667,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowHeartRateDetails(!showHeartRateDetails)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">❤️ Heart Rate {showHeartRateDetails && '▼'}</h3>
+              <h3 className="card-title mb-0">Heart Rate {showHeartRateDetails && '▼'}</h3>
               <button
                 onClick={(e) => { e.stopPropagation(); exportHeartRate(); }}
                 style={{
@@ -1684,7 +1684,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#5548d6'}
                 onMouseOut={(e) => e.target.style.background = '#6C63FF'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1745,7 +1745,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowBloodPressureDetails(!showBloodPressureDetails)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">🩸 Blood Pressure {showBloodPressureDetails && '▼'}</h3>
+              <h3 className="card-title mb-0">Blood Pressure {showBloodPressureDetails && '▼'}</h3>
               <button
                 onClick={(e) => { e.stopPropagation(); exportBloodPressure(); }}
                 style={{
@@ -1762,7 +1762,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#c2185b'}
                 onMouseOut={(e) => e.target.style.background = '#E91E63'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1825,7 +1825,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowO2Details(!showO2Details)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">💨 Oxygen Level {showO2Details && '▼'}</h3>
+              <h3 className="card-title mb-0">Oxygen Level {showO2Details && '▼'}</h3>
               <button
                 onClick={(e) => { e.stopPropagation(); exportOxygen(); }}
                 style={{
@@ -1842,7 +1842,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#0097a7'}
                 onMouseOut={(e) => e.target.style.background = '#00BCD4'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1903,7 +1903,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card" style={{ cursor: 'pointer' }} onClick={() => setShowStepsDetails(!showStepsDetails)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">👟 Steps {showStepsDetails && '▼'}</h3>
+              <h3 className="card-title mb-0">Steps {showStepsDetails && '▼'}</h3>
               <button
                 onClick={(e) => { e.stopPropagation(); exportSteps(); }}
                 style={{
@@ -1920,7 +1920,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#388e3c'}
                 onMouseOut={(e) => e.target.style.background = '#4CAF50'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1988,7 +1988,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">😰 Stress Level</h3>
+              <h3 className="card-title mb-0">Stress Level</h3>
               <button
                 onClick={exportStress}
                 style={{
@@ -2005,7 +2005,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#d32f2f'}
                 onMouseOut={(e) => e.target.style.background = '#F44336'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -2029,7 +2029,7 @@ function Dashboard() {
         <div className="col-md-6 mb-4">
           <div className="dashboard-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 className="card-title mb-0">💓 HRV (Heart Rate Variability)</h3>
+              <h3 className="card-title mb-0">HRV (Heart Rate Variability)</h3>
               <button
                 onClick={exportHRV}
                 style={{
@@ -2046,7 +2046,7 @@ function Dashboard() {
                 onMouseOver={(e) => e.target.style.background = '#7b1fa2'}
                 onMouseOut={(e) => e.target.style.background = '#9C27B0'}
               >
-                📥 Export
+                Export
               </button>
             </div>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -2087,7 +2087,7 @@ function Dashboard() {
             e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
           }}
         >
-          📥 Export Summary
+          Export Summary
         </button>
       </div>
     </>
