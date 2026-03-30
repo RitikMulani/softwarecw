@@ -105,7 +105,201 @@ function Dashboard() {
   };
 
   const handleExportBiometrics = () => {
-    alert('Please select a specific metric to export!');
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    // Header with gradient background color
+    doc.setFillColor(102, 126, 234);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('🐢 TurtleHealth', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Biometric Health Summary Report', pageWidth / 2, 25, { align: 'center' });
+
+    // Reset to black text and add date
+    doc.setTextColor(0, 0, 0);
+    yPosition = 45;
+
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Report Date: ${today}`, 15, yPosition);
+    yPosition += 8;
+    doc.text(`Patient: ${user?.name || 'User'}`, 15, yPosition);
+    yPosition += 8;
+    doc.text(`Health ID: ${user?.id || 'N/A'}`, 15, yPosition);
+    yPosition += 15;
+
+    // Section: Current Metrics
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('📊 CURRENT METRICS', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+
+    const metrics = [
+      { label: '❤️  Heart Rate', value: `${heartRate} bpm`, color: [108, 99, 255] },
+      { label: '🩸 Blood Pressure', value: `${bloodPressure} mmHg`, color: [233, 30, 99] },
+      { label: '💨 Oxygen Level (SpO2)', value: `${o2Level}%`, color: [76, 175, 80] },
+      { label: '👟 Daily Steps', value: `${steps}`, color: [255, 152, 0] },
+      { label: '💓 HRV', value: `${hrv} ms`, color: [156, 39, 176] },
+      { label: '😰 Stress Level', value: `${stressLevel} (Score: ${stressScore})`, color: [244, 67, 54] }
+    ];
+
+    metrics.forEach(metric => {
+      doc.setFillColor(...metric.color);
+      doc.rect(15, yPosition - 4, 180, 7, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont(undefined, 'bold');
+      doc.text(metric.label, 18, yPosition + 1);
+      
+      doc.setFont(undefined, 'normal');
+      doc.text(metric.value, 150, yPosition + 1, { align: 'right' });
+      
+      yPosition += 10;
+      doc.setTextColor(0, 0, 0);
+    });
+
+    yPosition += 5;
+
+    // Section: Weekly Averages
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('📈 WEEKLY AVERAGES', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+
+    const weeklyData = [
+      `Avg Heart Rate: ${Math.round(heartRateData.reduce((a, b) => a + b) / heartRateData.length)} bpm`,
+      `Avg Blood Pressure: ${Math.round(bloodPressureData.reduce((a, b) => a + b) / bloodPressureData.length)}/80 mmHg`,
+      `Avg SpO2: ${Math.round(o2Data.reduce((a, b) => a + b) / o2Data.length)}%`,
+      `Avg HRV: ${Math.round(hrvData.reduce((a, b) => a + b) / hrvData.length)} ms`
+    ];
+
+    weeklyData.forEach(item => {
+      doc.text(`• ${item}`, 21, yPosition);
+      yPosition += 7;
+    });
+
+    yPosition += 5;
+
+    // Section: Monthly Stats
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('📋 MONTHLY STATISTICS', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+
+    const monthlyStats = [
+      `Total Steps (Est.): ${Math.round(steps * 30).toLocaleString()}`,
+      `Average Stress: ${stressScore}`,
+      `Activity Level: ${steps > 10000 ? 'Excellent' : steps > 7000 ? 'Good' : 'Fair'}`
+    ];
+
+    monthlyStats.forEach(item => {
+      doc.text(`• ${item}`, 21, yPosition);
+      yPosition += 7;
+    });
+
+    yPosition += 10;
+
+    // Section: Health Status
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('✅ HEALTH STATUS', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+
+    const healthStatus = [
+      { status: `Heart Rate: ${heartRate > 100 ? '⚠️  Elevated' : '✓ Normal'}`, ok: heartRate <= 100 },
+      { status: `Blood Pressure: ${parseInt(bloodPressure) > 140 ? '⚠️  High' : '✓ Normal'}`, ok: parseInt(bloodPressure) <= 140 },
+      { status: `Oxygen Level: ${o2Level < 95 ? '⚠️  Low' : '✓ Normal'}`, ok: o2Level >= 95 },
+      { status: `Stress Levels: ${stressScore > 70 ? '⚠️  High' : stressScore > 50 ? '⚡ Moderate' : '✓ Good'}`, ok: stressScore <= 70 }
+    ];
+
+    healthStatus.forEach(item => {
+      const color = item.ok ? [76, 175, 80] : [244, 67, 54];
+      doc.setTextColor(...color);
+      doc.text(`• ${item.status}`, 21, yPosition);
+      yPosition += 7;
+      doc.setTextColor(0, 0, 0);
+    });
+
+    yPosition += 10;
+
+    // Section: Recommendations
+    if (yPosition > 200) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('💡 WELLNESS RECOMMENDATIONS', 15, yPosition);
+    yPosition += 10;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+
+    const recommendations = [];
+    if (heartRate > 100) recommendations.push('Try to relax and practice deep breathing exercises');
+    if (stressScore > 60) recommendations.push('Consider meditation or yoga to reduce stress');
+    if (steps < 7000) recommendations.push('Aim for 10,000 steps daily - try a short walk');
+    if (o2Level < 96) recommendations.push('Ensure good ventilation and breathing exercises');
+    recommendations.push('Maintain consistent sleep schedule (7-9 hours)');
+    recommendations.push('Stay hydrated throughout the day');
+    recommendations.push('Regular physical activity helps with overall wellness');
+
+    recommendations.forEach(rec => {
+      const lines = doc.splitTextToSize(`• ${rec}`, 170);
+      lines.forEach(line => {
+        doc.text(line, 21, yPosition);
+        yPosition += 6;
+      });
+    });
+
+    yPosition += 10;
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()} | TurtleHealth Dashboard`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Download PDF
+    doc.save(`Biometric_Summary_${new Date().toISOString().split('T')[0]}.pdf`);
+    alert('✅ Biometric summary exported as PDF successfully!');
   };
 
   // Heart Rate Export
