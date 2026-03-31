@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      const response = await authAPI.register(userData);
+      await authAPI.register(userData);
       return { success: true };
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Registration failed');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import { useAuth } from '../context/AuthContext';
 import TurtleAvatar from '../components/TurtleAvatar/TurtleAvatar';
-import { authAPI, usersAPI, sharingAPI, thresholdsAPI, deviceAPI } from '../services/api';
+import { authAPI, usersAPI, sharingAPI, thresholdsAPI } from '../services/api';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -949,7 +949,7 @@ function Dashboard() {
     fetchBiometricThresholds();
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchBiometricThresholds]);
 
   const fetchProfileData = async () => {
     try {
@@ -1072,7 +1072,7 @@ function Dashboard() {
     }
   };
 
-  const fetchBiometricThresholds = async () => {
+  const fetchBiometricThresholds = useCallback(async () => {
     try {
       const response = await thresholdsAPI.getThresholds();
       setBiometricThresholds(response.data.thresholds);
@@ -1083,7 +1083,7 @@ function Dashboard() {
     } catch (error) {
       console.error('Error fetching thresholds:', error);
     }
-  };
+  }, []);
 
   const calculateDynamicAlerts = (thresholds) => {
     if (!thresholds) return;
@@ -1257,8 +1257,6 @@ function Dashboard() {
     const stressBonus = Math.floor((userStats.weeklyStressAverage - userStats.weeklyStress) * 2);
     return Math.max(0, stepBonus + stressBonus);
   };
-
-  const userPoints = calculateUserPoints();
 
   const getHeartRateStatus = (hr) => {
     if (hr < 60) return { status: 'Low', color: '#2196F3', emoji: '📉' };
