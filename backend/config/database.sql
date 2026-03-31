@@ -149,9 +149,10 @@ CREATE TABLE IF NOT EXISTS device_readings (
   steps INT,
   is_anomaly BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_user_timestamp (user_id, created_at DESC)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_device_readings_user_timestamp ON device_readings(user_id, created_at DESC);
 
 -- Insert sample data
 -- Sample Doctors

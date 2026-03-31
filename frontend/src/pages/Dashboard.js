@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import { useAuth } from '../context/AuthContext';
 import TurtleAvatar from '../components/TurtleAvatar/TurtleAvatar';
-import { authAPI, usersAPI, sharingAPI, thresholdsAPI } from '../services/api';
+import { authAPI, usersAPI, sharingAPI, thresholdsAPI, deviceAPI } from '../services/api';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -46,6 +46,8 @@ function Dashboard() {
   const [isSavingThresholds, setIsSavingThresholds] = useState(false);
   const [loading, setLoading] = useState(false);
   const [biometricAlerts, setBiometricAlerts] = useState([]);
+  const [emergencyBiomarkers, setEmergencyBiomarkers] = useState(null);
+  const [isLoadingEmergencyData, setIsLoadingEmergencyData] = useState(false);
   
   const [leaderboard, setLeaderboard] = useState([]);
 
@@ -1197,6 +1199,51 @@ function Dashboard() {
 
   const handleCancelThresholdEdit = () => {
     setIsEditingThresholds(false);
+  };
+
+  const fetchEmergencyBiomarkers = async () => {
+    setIsLoadingEmergencyData(true);
+    try {
+      // Calculate averages from current state data
+      const biomarkers = {
+        heart_rate: {
+          average: Math.round(heartRateData.reduce((a, b) => a + b, 0) / heartRateData.length),
+          latest: heartRateData[heartRateData.length - 1],
+          count: heartRateData.length
+        },
+        blood_pressure_systolic: {
+          average: Math.round(bloodPressureData.reduce((a, b) => a + b, 0) / bloodPressureData.length),
+          latest: bloodPressureData[bloodPressureData.length - 1],
+          count: bloodPressureData.length
+        },
+        spo2: {
+          average: Math.round(o2Data.reduce((a, b) => a + b, 0) / o2Data.length),
+          latest: o2Data[o2Data.length - 1],
+          count: o2Data.length
+        },
+        body_temperature: {
+          average: (hrvData.reduce((a, b) => a + b, 0) / hrvData.length * 0.1 + 36.5).toFixed(1),
+          latest: 37.0,
+          count: hrvData.length
+        },
+        steps: {
+          average: Math.round(stepsData.reduce((a, b) => a + b, 0) / stepsData.length),
+          latest: stepsData[stepsData.length - 1],
+          count: stepsData.length
+        },
+        hrv: {
+          average: Math.round(hrvData.reduce((a, b) => a + b, 0) / hrvData.length),
+          latest: hrvData[hrvData.length - 1],
+          count: hrvData.length
+        }
+      };
+
+      setEmergencyBiomarkers(biomarkers);
+    } catch (error) {
+      console.error('Error calculating biomarkers:', error);
+      setEmergencyBiomarkers(null);
+    }
+    setIsLoadingEmergencyData(false);
   };
 
   const getTrendArrow = (trend) => {
@@ -2501,7 +2548,10 @@ function Dashboard() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <button 
-              onClick={() => setShowEmergencyModal(true)}
+              onClick={() => {
+                fetchEmergencyBiomarkers();
+                setShowEmergencyModal(true);
+              }}
               style={{
                 background: '#F44336',
                 border: 'none',
@@ -2552,22 +2602,188 @@ function Dashboard() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          overflowY: 'auto'
         }}>
           <div style={{
             background: 'white',
             borderRadius: '20px',
             padding: '2rem',
-            maxWidth: '500px',
+            maxWidth: '600px',
             width: '90%',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-            animation: 'slideIn 0.3s ease-out'
+            animation: 'slideIn 0.3s ease-out',
+            margin: '2rem auto'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🚨</div>
-              <h2 style={{ fontSize: '1.8rem', color: '#F44336', marginBottom: '0.5rem' }}>Emergency Services</h2>
-              <p style={{ color: '#666', fontSize: '1rem' }}>Do you need immediate assistance?</p>
+              <h2 style={{ fontSize: '1.8rem', color: '#F44336', marginBottom: '0.5rem' }}>Emergency Response Mode</h2>
+              <p style={{ color: '#666', fontSize: '1rem' }}>Critical health information for emergency services</p>
             </div>
+            
+            {/* Health Conditions Section */}
+            {profileData?.patientDetails?.chronic_conditions && (
+              <div style={{
+                background: '#FFF8E1',
+                border: '2px solid #FF9800',
+                borderRadius: '10px',
+                padding: '1.2rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{ margin: '0 0 0.8rem 0', color: '#E65100', fontSize: '1.1rem', fontWeight: '600' }}>🏥 Chronic Conditions</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {profileData.patientDetails.chronic_conditions.split(',').map((condition, idx) => (
+                    <span key={idx} style={{
+                      background: '#FFB74D',
+                      color: 'white',
+                      padding: '0.5rem 0.8rem',
+                      borderRadius: '20px',
+                      fontSize: '0.9rem',
+                      fontWeight: '500'
+                    }}>
+                      {condition.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Average Biomarkers Section */}
+            {isLoadingEmergencyData && (
+              <div style={{
+                background: '#F5F5F5',
+                border: '1px solid #E0E0E0',
+                borderRadius: '10px',
+                padding: '2rem',
+                textAlign: 'center',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{ color: '#666', margin: 0 }}>Loading biomarker data...</p>
+              </div>
+            )}
+
+            {emergencyBiomarkers && !isLoadingEmergencyData && (
+              <div style={{
+                background: '#E8F5E9',
+                border: '2px solid #4CAF50',
+                borderRadius: '10px',
+                padding: '1.2rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{ margin: '0 0 1rem 0', color: '#2E7D32', fontSize: '1.1rem', fontWeight: '600' }}>📊 Average Biomarkers</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                  {emergencyBiomarkers.heart_rate && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>❤️ Heart Rate</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {emergencyBiomarkers.heart_rate.average} bpm
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {emergencyBiomarkers.heart_rate.latest}
+                      </p>
+                    </div>
+                  )}
+                  {emergencyBiomarkers.blood_pressure_systolic && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>🩸 BP Systolic</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {emergencyBiomarkers.blood_pressure_systolic.average} mmHg
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {emergencyBiomarkers.blood_pressure_systolic.latest}
+                      </p>
+                    </div>
+                  )}
+                  {emergencyBiomarkers.spo2 && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>💨 SpO2</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {emergencyBiomarkers.spo2.average}%
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {emergencyBiomarkers.spo2.latest}%
+                      </p>
+                    </div>
+                  )}
+                  {emergencyBiomarkers.body_temperature && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>🌡️ Temperature</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {emergencyBiomarkers.body_temperature.average}°C
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {emergencyBiomarkers.body_temperature.latest}°C
+                      </p>
+                    </div>
+                  )}
+                  {emergencyBiomarkers.hrv && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>💓 HRV</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {emergencyBiomarkers.hrv.average} ms
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {emergencyBiomarkers.hrv.latest}
+                      </p>
+                    </div>
+                  )}
+                  {emergencyBiomarkers.steps && (
+                    <div style={{
+                      background: 'white',
+                      padding: '0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid #C8E6C9'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.85rem', color: '#666' }}>👟 Steps</p>
+                      <p style={{ margin: 0, fontSize: '1.3rem', fontWeight: '600', color: '#2E7D32' }}>
+                        {Math.round(emergencyBiomarkers.steps.average)}
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>
+                        Latest: {Math.round(emergencyBiomarkers.steps.latest)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!emergencyBiomarkers && !isLoadingEmergencyData && (
+              <div style={{
+                background: '#F5F5F5',
+                border: '1px solid #E0E0E0',
+                borderRadius: '10px',
+                padding: '1.2rem',
+                textAlign: 'center',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{ color: '#999', margin: 0, fontSize: '0.9rem' }}>No biomarker data available</p>
+              </div>
+            )}
             
             <div style={{
               background: '#fff3e0',

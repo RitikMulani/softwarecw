@@ -27,14 +27,14 @@ export async function storeReading(req, res) {
     // Store the reading in database
     const [result] = await db.query(
       `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP) RETURNING id`,
       [userId, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, isAnomaly]
     );
 
     res.status(201).json({
       message: 'Reading stored successfully',
       data: {
-        id: result[0]?.id,
+        id: result[0]?.id || result?.id,
         heart_rate,
         blood_pressure_sys,
         blood_pressure_dia,
@@ -61,7 +61,7 @@ export async function getLatestReading(req, res) {
     const userId = req.user.userId;
 
     const [reading] = await db.query(
-      `SELECT * FROM device_readings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
+      `SELECT * FROM device_readings WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [userId]
     );
 
@@ -91,7 +91,7 @@ export async function getReadingsWithValidation(req, res) {
 
     const [readings] = await db.query(
       `SELECT * FROM device_readings 
-       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       WHERE user_id = $1 AND created_at >= NOW() - (CAST($2 as int) * INTERVAL '1 day')
        ORDER BY created_at DESC`,
       [userId, days]
     );
