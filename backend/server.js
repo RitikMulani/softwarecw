@@ -84,7 +84,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.BACKEND_PORT || 4000}`,
+        url: `http://localhost:${process.env.PORT || 4000}`,
         description: 'Development server',
       },
     ],
@@ -187,7 +187,7 @@ io.on('connection', socket => {
 });
 
 // Start server
-const PORT = process.env.BACKEND_PORT || 4000;
+const PORT = process.env.PORT || 4000;
 
 httpServer.listen(PORT, () => {
   console.log('');
