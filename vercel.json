@@ -1,13 +1,2 @@
-{
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/build",
-  "env": {
-    "REACT_APP_API_URL": "@REACT_APP_API_URL"
-  },
-  "ignoreCommand": "git diff --quiet HEAD~1 frontend/",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
-}
+# Netlify configuration - see netlify.toml instead
+# This file is no longer used - kept for reference only
