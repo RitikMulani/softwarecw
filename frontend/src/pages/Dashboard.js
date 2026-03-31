@@ -922,6 +922,44 @@ function Dashboard() {
     alert('✅ Stress report exported!');
   };
 
+  // Function to calculate dynamic alerts based on thresholds
+  const calculateDynamicAlerts = (thresholds) => {
+    if (!thresholds) return;
+    
+    const alerts = [];
+    let alertId = 0;
+
+    // Check Heart Rate
+    if (heartRateData[heartRateData.length - 1]) {
+      const currentHR = Math.round(heartRateData[heartRateData.length - 1]);
+      if (thresholds.heart_rate_alert_above && currentHR > thresholds.heart_rate_alert_above) {
+        alerts.push({
+          id: alertId++,
+          type: 'alert',
+          title: 'High Heart Rate',
+          message: `Your heart rate is ${currentHR} bpm, above the threshold of ${thresholds.heart_rate_alert_above} bpm`,
+          severity: 'warning'
+        });
+      }
+    }
+
+    setBiometricAlerts(alerts);
+  };
+
+  // Function to fetch biometric thresholds
+  const fetchBiometricThresholds = async () => {
+    try {
+      const response = await thresholdsAPI.getThresholds();
+      setBiometricThresholds(response.data.thresholds);
+      setThresholdFormData(response.data.thresholds);
+      
+      // Calculate alerts based on current readings and thresholds
+      calculateDynamicAlerts(response.data.thresholds);
+    } catch (error) {
+      console.error('Error fetching thresholds:', error);
+    }
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       setHeartRateData(prev => {
@@ -949,7 +987,7 @@ function Dashboard() {
     fetchBiometricThresholds();
 
     return () => clearInterval(interval);
-  }, [fetchBiometricThresholds]);
+  }, []);
 
   const fetchProfileData = async () => {
     try {
@@ -1072,104 +1110,6 @@ function Dashboard() {
     }
   };
 
-  const fetchBiometricThresholds = useCallback(async () => {
-    try {
-      const response = await thresholdsAPI.getThresholds();
-      setBiometricThresholds(response.data.thresholds);
-      setThresholdFormData(response.data.thresholds);
-      
-      // Calculate alerts based on current readings and thresholds
-      calculateDynamicAlerts(response.data.thresholds);
-    } catch (error) {
-      console.error('Error fetching thresholds:', error);
-    }
-  }, []);
-
-  const calculateDynamicAlerts = (thresholds) => {
-    if (!thresholds) return;
-    
-    const alerts = [];
-    let alertId = 0;
-
-    // Check Heart Rate
-    if (heartRateData[heartRateData.length - 1]) {
-      const currentHR = Math.round(heartRateData[heartRateData.length - 1]);
-      if (thresholds.heart_rate_alert_above && currentHR > thresholds.heart_rate_alert_above) {
-        alerts.push({
-          id: alertId++,
-          type: 'alert',
-          metric: 'Heart Rate',
-          reading: currentHR,
-          status: 'High',
-          message: `Your heart rate is above your threshold (${currentHR} bpm > ${thresholds.heart_rate_alert_above} bpm)`,
-          timestamp: new Date(),
-          severity: 'warning'
-        });
-      } else if (thresholds.heart_rate_alert_below && currentHR < thresholds.heart_rate_alert_below) {
-        alerts.push({
-          id: alertId++,
-          type: 'alert',
-          metric: 'Heart Rate',
-          reading: currentHR,
-          status: 'Low',
-          message: `Your heart rate is below your threshold (${currentHR} bpm < ${thresholds.heart_rate_alert_below} bpm)`,
-          timestamp: new Date(),
-          severity: 'warning'
-        });
-      }
-    }
-
-    // Check Blood Pressure Systolic
-    if (bloodPressureData[bloodPressureData.length - 1]) {
-      const currentBPSys = bloodPressureData[bloodPressureData.length - 1];
-      if (thresholds.blood_pressure_sys_alert_above && currentBPSys > thresholds.blood_pressure_sys_alert_above) {
-        alerts.push({
-          id: alertId++,
-          type: 'alert',
-          metric: 'Blood Pressure (Systolic)',
-          reading: currentBPSys,
-          status: 'High',
-          message: `Your systolic pressure is above threshold (${currentBPSys} > ${thresholds.blood_pressure_sys_alert_above} mmHg)`,
-          timestamp: new Date(),
-          severity: 'warning'
-        });
-      }
-    }
-
-    // Check SpO2
-    if (o2Data[o2Data.length - 1]) {
-      const currentO2 = o2Data[o2Data.length - 1];
-      if (thresholds.spo2_alert_below && currentO2 < thresholds.spo2_alert_below) {
-        alerts.push({
-          id: alertId++,
-          type: 'alert',
-          metric: 'SpO2',
-          reading: currentO2,
-          status: 'Low',
-          message: `Your oxygen level is below threshold (${currentO2}% < ${thresholds.spo2_alert_below}%)`,
-          timestamp: new Date(),
-          severity: 'warning'
-        });
-      }
-    }
-
-    // Check Steps
-    if (thresholds.steps_alert_below && steps < thresholds.steps_alert_below) {
-      alerts.push({
-        id: alertId++,
-        type: 'alert',
-        metric: 'Steps',
-        reading: steps,
-        status: 'Low',
-        message: `Your step count is below your daily threshold (${steps} < ${thresholds.steps_alert_below} steps)`,
-        timestamp: new Date(),
-        severity: 'info'
-      });
-    }
-
-    setBiometricAlerts(alerts);
-  };
-
   const handleEditThresholds = () => {
     setThresholdFormData(biometricThresholds || {});
     setIsEditingThresholds(true);
@@ -1250,12 +1190,6 @@ function Dashboard() {
     if (trend === 'up') return <span style={{ color: '#4CAF50' }}>↑</span>;
     if (trend === 'down') return <span style={{ color: '#F44336' }}>↓</span>;
     return <span style={{ color: '#9E9E9E' }}>→</span>;
-  };
-
-  const calculateUserPoints = () => {
-    const stepBonus = Math.floor((userStats.monthlySteps - userStats.monthlyStepsAverage) / 1000);
-    const stressBonus = Math.floor((userStats.weeklyStressAverage - userStats.weeklyStress) * 2);
-    return Math.max(0, stepBonus + stressBonus);
   };
 
   const getHeartRateStatus = (hr) => {
