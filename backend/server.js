@@ -17,6 +17,7 @@ import medicalRoutes from './routes/medical.routes.js';
 import prescriptionRoutes from './routes/prescription.routes.js';
 import leaderboardRoutes from './routes/leaderboard.routes.js';
 import pointsRoutes from './routes/points.routes.js';
+import thresholdsRoutes from './routes/thresholds.routes.js';
 
 // Import middleware
 import { apiLimiter } from './middleware/rateLimiter.js';
@@ -66,6 +67,7 @@ app.use('/api/medical-records', medicalRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/points', pointsRoutes);
+app.use('/api/thresholds', thresholdsRoutes);
 
 // Swagger documentation
 const swaggerOptions = {

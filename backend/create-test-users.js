@@ -88,13 +88,31 @@ async function createTestUsers() {
           ['alice.johnson@email.com', hashedPassword]
         );
         
-        // Add patient details
+        // Add patient details with chronic conditions
         await db.query(
           `INSERT INTO patients (user_id, blood_group, allergies, chronic_conditions, emergency_contact, emergency_phone) 
-           VALUES (?, 'O+', 'Penicillin', 'None', 'Mary Johnson', '555-0301')`,
+           VALUES (?, 'O+', 'Penicillin', 'Asthma, Seasonal Allergies', 'Mary Johnson', '555-0301')`,
           [result[0].id]
         );
-        console.log('✓ Created: alice.johnson@email.com (Patient)');
+        
+        // Add test biomarker readings for Alice
+        const biopayloads = [
+          { heart_rate: 68, blood_pressure_sys: 115, blood_pressure_dia: 75, spo2: 99, body_temp: 37.0, hrv: 62, steps: 10200 },
+          { heart_rate: 71, blood_pressure_sys: 116, blood_pressure_dia: 76, spo2: 98, body_temp: 36.9, hrv: 65, steps: 11500 },
+          { heart_rate: 69, blood_pressure_sys: 114, blood_pressure_dia: 74, spo2: 99, body_temp: 37.1, hrv: 63, steps: 9800 },
+          { heart_rate: 72, blood_pressure_sys: 117, blood_pressure_dia: 77, spo2: 99, body_temp: 37.0, hrv: 60, steps: 12300 },
+          { heart_rate: 70, blood_pressure_sys: 115, blood_pressure_dia: 75, spo2: 98, body_temp: 36.8, hrv: 64, steps: 10700 }
+        ];
+        
+        for (const bio of biopayloads) {
+          await db.query(
+            `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, false, CURRENT_TIMESTAMP - INTERVAL '1 hour')`,
+            [result[0].id, bio.heart_rate, bio.blood_pressure_sys, bio.blood_pressure_dia, bio.spo2, bio.body_temp, bio.hrv, bio.steps]
+          );
+        }
+        
+        console.log('✓ Created: alice.johnson@email.com (Patient) with biomarker data');
       } else {
         await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, 'alice.johnson@email.com']);
         console.log('✓ Updated: alice.johnson@email.com (Patient)');
@@ -116,10 +134,28 @@ async function createTestUsers() {
         // Add patient details
         await db.query(
           `INSERT INTO patients (user_id, blood_group, allergies, chronic_conditions, emergency_contact, emergency_phone) 
-           VALUES (?, 'A+', 'None', 'Diabetes Type 2', 'Jane Williams', '555-0302')`,
+           VALUES (?, 'A+', 'None', 'Diabetes Type 2, Hypertension', 'Jane Williams', '555-0302')`,
           [result[0].id]
         );
-        console.log('✓ Created: bob.williams@email.com (Patient)');
+        
+        // Add test biomarker readings for Bob
+        const biopayloads = [
+          { heart_rate: 72, blood_pressure_sys: 120, blood_pressure_dia: 80, spo2: 98, body_temp: 37.2, hrv: 55, steps: 8500 },
+          { heart_rate: 75, blood_pressure_sys: 118, blood_pressure_dia: 79, spo2: 97, body_temp: 37.1, hrv: 58, steps: 9200 },
+          { heart_rate: 70, blood_pressure_sys: 122, blood_pressure_dia: 81, spo2: 98, body_temp: 37.3, hrv: 52, steps: 7800 },
+          { heart_rate: 78, blood_pressure_sys: 125, blood_pressure_dia: 82, spo2: 97, body_temp: 37.0, hrv: 60, steps: 10500 },
+          { heart_rate: 73, blood_pressure_sys: 119, blood_pressure_dia: 80, spo2: 99, body_temp: 37.2, hrv: 56, steps: 8900 }
+        ];
+        
+        for (const bio of biopayloads) {
+          await db.query(
+            `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, false, CURRENT_TIMESTAMP - INTERVAL '1 hour')`,
+            [result[0].id, bio.heart_rate, bio.blood_pressure_sys, bio.blood_pressure_dia, bio.spo2, bio.body_temp, bio.hrv, bio.steps]
+          );
+        }
+        
+        console.log('✓ Created: bob.williams@email.com (Patient) with biomarker data');
       } else {
         await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, 'bob.williams@email.com']);
         console.log('✓ Updated: bob.williams@email.com (Patient)');

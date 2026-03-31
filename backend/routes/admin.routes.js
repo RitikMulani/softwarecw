@@ -49,7 +49,7 @@ router.get('/users', authenticateToken, isAdmin, async (req, res) => {
  */
 router.post('/create-doctor', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const { email, password, full_name, phone, date_of_birth, gender } = req.body;
+    const { email, password, full_name, phone, date_of_birth, gender, specialization, qualification, experience_years, consultation_fee } = req.body;
 
     // Validate required fields
     if (!email || !password || !full_name) {
@@ -57,7 +57,7 @@ router.post('/create-doctor', authenticateToken, isAdmin, async (req, res) => {
     }
 
     // Check if email already exists
-    const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await db.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.length > 0) {
       return res.status(400).json({ message: 'Email already in use' });
     }
@@ -65,16 +65,27 @@ router.post('/create-doctor', authenticateToken, isAdmin, async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create doctor account
+    // Create doctor user account
     const [result] = await db.query(
       `INSERT INTO users (email, password, user_type, full_name, phone, date_of_birth, gender, created_at) 
-       VALUES (?, ?, 'doctor', ?, ?, ?, ?, NOW())`,
+       VALUES ($1, $2, 'doctor', $3, $4, $5, $6, CURRENT_TIMESTAMP) RETURNING id`,
       [email, hashedPassword, full_name, phone || null, date_of_birth || null, gender || null]
     );
 
+    const userId = result[0]?.id || result?.id;
+
+    // Create doctor details entry
+    if (userId) {
+      await db.query(
+        `INSERT INTO doctors (user_id, specialization, qualification, experience_years, consultation_fee) 
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, specialization || null, qualification || null, experience_years || null, consultation_fee || null]
+      );
+    }
+
     res.status(201).json({
       message: 'Doctor account created successfully',
-      doctorId: result.insertId
+      doctorId: userId
     });
   } catch (error) {
     console.error('Error creating doctor:', error);
@@ -90,7 +101,7 @@ router.delete('/users/:userId', authenticateToken, isAdmin, async (req, res) => 
     const { userId } = req.params;
 
     // Check if user exists and is not an admin
-    const [user] = await db.query('SELECT user_type FROM users WHERE id = ?', [userId]);
+    const [user] = await db.query('SELECT user_type FROM users WHERE id = $1', [userId]);
     
     if (user.length === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -101,7 +112,7 @@ router.delete('/users/:userId', authenticateToken, isAdmin, async (req, res) => 
     }
 
     // Delete user (cascade will handle related records)
-    await db.query('DELETE FROM users WHERE id = ?', [userId]);
+    await db.query('DELETE FROM users WHERE id = $1', [userId]);
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {

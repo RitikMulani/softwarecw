@@ -75,4 +75,17 @@ export const sharingAPI = {
   disconnectProvider: (sharingId) => api.delete(`/sharing/${sharingId}/disconnect`)
 };
 
+// Thresholds API (Biometric Alert Thresholds)
+export const thresholdsAPI = {
+  getThresholds: () => api.get('/thresholds'),
+  updateThresholds: (thresholds) => api.put('/thresholds', thresholds)
+};
+
+// Device API (Biometric Readings)
+export const deviceAPI = {
+  getReadingsHistory: () => api.get('/device/readings/history'),
+  getLatestReading: () => api.get('/device/readings/latest'),
+  storeReading: (readingData) => api.post('/device/readings', readingData)
+};
+
 export default api;

@@ -23,7 +23,15 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
   },
-  "keywords": ["health", "biometrics", "wearables", "real-time", "react", "nodejs", "turtle"],
+  "keywords": [
+    "health",
+    "biometrics",
+    "wearables",
+    "real-time",
+    "react",
+    "nodejs",
+    "turtle"
+  ],
   "author": "TurtleHealth Team",
   "license": "MIT",
   "devDependencies": {

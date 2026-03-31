@@ -50,7 +50,12 @@ function AdminDashboard() {
 
     setLoading(true);
     try {
-      await api.post('/admin/create-doctor', doctorForm);
+      // Normalize gender to lowercase for database
+      const normalizedForm = {
+        ...doctorForm,
+        gender: doctorForm.gender ? doctorForm.gender.toLowerCase() : 'male'
+      };
+      await api.post('/admin/create-doctor', normalizedForm);
       alert('Doctor account created successfully!');
       setDoctorForm({
         email: '',
