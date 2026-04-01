@@ -1453,14 +1453,60 @@ function Dashboard() {
         <p style={{ color: '#999', textAlign: 'center', padding: '2rem' }}>Loading leaderboard data...</p>
       ) : (
         leaderboard.map((entry) => (
-          <div key={entry.rank} className="leaderboard-row">
-            <span className="leaderboard-rank">#{entry.rank}</span>
-            <span className="leaderboard-name">{entry.name}</span>
-            <div className="leaderboard-divider"></div>
-            <span className="leaderboard-stress">
-              Stress: {entry.stress}
-              <span style={{ marginLeft: '0.5rem' }}>{getTrendArrow(entry.trend)}</span>
-            </span>
+          <div
+            key={entry.rank}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '1.2rem',
+              marginBottom: '0.8rem',
+              background: entry.rank <= 3 ? 'linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)' : '#f8f9fa',
+              borderRadius: '12px',
+              border: entry.rank <= 3 ? '2px solid #FFD700' : '1px solid #e0e0e0',
+              transition: 'all 0.3s'
+            }}
+          >
+            <div
+              style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                background: entry.rank <= 3 ? '#FFD700' : '#e0e0e0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                color: entry.rank <= 3 ? '#333' : '#999',
+                marginRight: '1.5rem'
+              }}
+            >
+              {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#333' }}>{entry.name}</span>
+                {entry.rank <= 3 && (
+                  <span
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Top {entry.rank}
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: 0, color: '#999', fontSize: '0.9rem' }}>
+                Stress Level: {entry.stress}
+                <span style={{ marginLeft: '0.5rem' }}>{getTrendArrow(entry.trend)}</span>
+              </p>
+            </div>
           </div>
         ))
       )}
