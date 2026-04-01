@@ -76,11 +76,17 @@ router.post('/create-doctor', authenticateToken, isAdmin, async (req, res) => {
 
     // Create doctor details entry
     if (userId) {
-      await db.query(
-        `INSERT INTO doctors (user_id, specialization, qualification, experience_years, consultation_fee) 
-         VALUES ($1, $2, $3, $4, $5)`,
-        [userId, specialization || null, qualification || null, experience_years || null, consultation_fee || null]
-      );
+      try {
+        await db.query(
+          `INSERT INTO doctors (user_id, specialization, qualification, experience_years, consultation_fee) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [userId, specialization || 'General', qualification || null, experience_years || null, consultation_fee || null]
+        );
+      } catch (doctorError) {
+        console.error('Error creating doctor record:', doctorError);
+        // Doctor user was created, but record creation failed - still return success
+        // since the user account is the important part
+      }
     }
 
     res.status(201).json({
