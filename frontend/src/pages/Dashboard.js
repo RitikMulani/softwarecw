@@ -936,9 +936,12 @@ function Dashboard() {
         alerts.push({
           id: alertId++,
           type: 'alert',
-          title: 'High Heart Rate',
+          metric: 'Heart Rate',
           message: `Your heart rate is ${currentHR} bpm, above the threshold of ${thresholds.heart_rate_alert_above} bpm`,
-          severity: 'warning'
+          reading: currentHR,
+          status: 'High',
+          severity: 'warning',
+          timestamp: new Date()
         });
       }
     }
