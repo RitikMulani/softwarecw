@@ -83,14 +83,7 @@ export async function register(req, res) {
 }
 
 /**
- * Login user
- */
-export async function login(req, res) {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-   Authenticate user with email and password
+ * Authenticate user with email and password
  * Verifies credentials, generates tokens, and stores refresh token
  */
 export async function login(req, res) {
@@ -111,16 +104,19 @@ export async function login(req, res) {
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
- expires_at, created_at) 
+
+    try {
+      const tokenId = uuidv4();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      await db.query(
+        `INSERT INTO refresh_tokens (id, user_id, token, expires_at, created_at) 
          VALUES (?, ?, ?, ?, NOW())`,
         [tokenId, user.id, refreshToken, expiresAt]
       );
     } catch (err) {
-      // Table might not exist, continue anyway
-    }
-
-    // Return tokens and user info
-    res.json({with login
+      // Table might not exist, continue with login
     }
 
     res.json({
@@ -141,13 +137,16 @@ export async function login(req, res) {
 
 /**
  * Issue new access token using a valid refresh token
- * Revokes the old refresh token and issues a new pairn } = req.body;
+ * Revokes the old refresh token and issues a new pair
+ */
+export async function refresh(req, res) {
+  try {
+    const { refreshToken } = req.body;
 
     if (!refreshToken) {
       return res.status(401).json({ message: 'Refresh token required' });
     }
 
-    // Verify token
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
@@ -155,7 +154,6 @@ export async function login(req, res) {
       return res.status(403).json({ message: 'Invalid refresh token' });
     }
 
-    // Check if token exists and is not revoked
     const [tokens] = await db.query(
       `SELECT * FROM refresh_tokens 
        WHERE token = $1 AND user_id = $2 AND revoked = FALSE AND expires_at > CURRENT_TIMESTAMP`,
@@ -166,17 +164,14 @@ export async function login(req, res) {
       return res.status(403).json({ message: 'Invalid or expired refresh token' });
     }
 
-    // Get user
     const [users] = await db.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
 
     if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate new tokens
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(users[0]);
 
-    // Revoke old refresh token
     await db.query('UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1', [tokens[0].id]);
 
     const tokenId = uuidv4();
