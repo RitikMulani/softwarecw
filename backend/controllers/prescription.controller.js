@@ -1,26 +1,24 @@
 import db from '../config/database.js';
 
 /**
- * Get current user's prescriptions
+ * Retrieve prescriptions for current user
+ * Doctors see their prescribed medications, patients see medications prescribed to them
  */
 export async function getMyPrescriptions(req, res) {
   try {
     const userId = req.user.userId;
 
-    // Get user role
     const [user] = await db.query('SELECT user_type FROM users WHERE id = ?', [userId]);
 
     let prescriptions = [];
     
     if (user && user[0].user_type === 'doctor') {
-      // Doctors see prescriptions they created
       const [docs] = await db.query(
         `SELECT * FROM prescriptions WHERE doctor_id = ? ORDER BY prescribed_date DESC`,
         [userId]
       );
       prescriptions = docs || [];
     } else {
-      // Patients see prescriptions prescribed to them
       const [patients] = await db.query(
         `SELECT * FROM prescriptions WHERE patient_id = ? ORDER BY prescribed_date DESC`,
         [userId]
@@ -37,7 +35,7 @@ export async function getMyPrescriptions(req, res) {
 }
 
 /**
- * Get prescription by ID
+ * Get a specific prescription (viewable by prescribing doctor or patient)
  */
 export async function getPrescriptionById(req, res) {
   try {

@@ -1,7 +1,8 @@
 import db from '../config/database.js';
 
 /**
- * Get top 5 users with highest points
+ * Get top 5 users by points
+ * Identifies top 3 performers for special recognition
  */
 export async function getTopPointsLeaderboard(req, res) {
   try {
@@ -17,7 +18,6 @@ export async function getTopPointsLeaderboard(req, res) {
       LIMIT 5`
     );
 
-    // Add rank and isTopThree flag
     const rankedLeaderboard = (leaderboard || []).map((user, index) => ({
       rank: index + 1,
       name: user.name,

@@ -19,11 +19,9 @@ const SmartwatchIntegration = ({ userId }) => {
   }, []);
 
   const checkConnection = () => {
-    // Check if Web Bluetooth API is available (for real smartwatch)
     if (navigator.bluetooth) {
       console.log('Web Bluetooth API available');
     }
-    // For now, we'll use simulation
   };
 
   const fetchLatestData = async () => {
@@ -47,11 +45,10 @@ const SmartwatchIntegration = ({ userId }) => {
   const connectSmartwatch = async () => {
     try {
       if (navigator.bluetooth) {
-        // Real smartwatch connection
         const device = await navigator.bluetooth.requestDevice({
           filters: [
             { services: ['heart_rate'] },
-            { services: ['0000180d-0000-1000-8000-00805f9b34fb'] } // Heart Rate Service
+            { services: ['0000180d-0000-1000-8000-00805f9b34fb'] }
           ],
           optionalServices: ['battery_service']
         });
@@ -59,11 +56,9 @@ const SmartwatchIntegration = ({ userId }) => {
         const server = await device.gatt.connect();
         console.log('Connected to device:', device.name);
         
-        // Get Heart Rate Service
         const service = await server.getPrimaryService('heart_rate');
         const characteristic = await service.getCharacteristic('heart_rate_measurement');
         
-        // Listen to heart rate changes
         await characteristic.startNotifications();
         characteristic.addEventListener('characteristicvaluechanged', (event) => {
           const value = event.target.value;
@@ -89,7 +84,6 @@ const SmartwatchIntegration = ({ userId }) => {
     setSimulationRunning(true);
     
     const interval = setInterval(async () => {
-      // Generate realistic biometric data
       const newData = {
         heartRate: Math.floor(Math.random() * (100 - 60 + 1)) + 60,
         steps: Math.floor(Math.random() * 100) + biometricData.steps,

@@ -2,6 +2,7 @@ import db from '../config/database.js';
 
 /**
  * Get top 5 users with lowest stress levels
+ * Returns ranked list with stress trends
  */
 export async function getTopStressLeaderboard(req, res) {
   try {
@@ -17,7 +18,6 @@ export async function getTopStressLeaderboard(req, res) {
       LIMIT 5`
     );
 
-    // Add rank and trend
     const rankedLeaderboard = (leaderboard || []).map((user, index) => ({
       rank: index + 1,
       name: user.name,

@@ -5,11 +5,12 @@ import db from '../config/database.js';
 dotenv.config();
 
 /**
- * Middleware to verify JWT access token
+ * Verify JWT access token and attach user info to request
+ * Expects token in Authorization header: Bearer <token>
  */
 export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ message: 'Access token required' });
@@ -27,7 +28,9 @@ export const authenticateToken = (req, res, next) => {
 };
 
 /**
- * Middleware to check user roles (RBAC)
+ * Role-based access control middleware
+ * Restricts endpoint access to users with specified roles
+ * @param {...string} roles - Allowed roles for this endpoint
  */
 export const authorizeRole = (...roles) => {
   return (req, res, next) => {
@@ -46,7 +49,8 @@ export const authorizeRole = (...roles) => {
 };
 
 /**
- * Middleware to validate refresh token
+ * Validate refresh token and check revocation status
+ * Verifies token signature and database status
  */
 export const validateRefreshToken = async (req, res, next) => {
   const { refreshToken } = req.body;
@@ -56,10 +60,8 @@ export const validateRefreshToken = async (req, res, next) => {
   }
 
   try {
-    // Verify token signature
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // Check if token exists in database and is not revoked
     const [tokens] = await db.query(
       'SELECT * FROM refresh_tokens WHERE token = ? AND user_id = ? AND revoked = FALSE AND expires_at > NOW()',
       [refreshToken, decoded.userId]
@@ -78,7 +80,8 @@ export const validateRefreshToken = async (req, res, next) => {
 };
 
 /**
- * Optional authentication - doesn't fail if no token
+ * Optional authentication - proceed even without valid token
+ * Useful for endpoints that work for both authenticated and unauthenticated users
  */
 export const optionalAuth = (req, res, next) => {
   const authHeader = req.headers['authorization'];

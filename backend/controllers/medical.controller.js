@@ -1,7 +1,7 @@
 import db from '../config/database.js';
 
 /**
- * Get current user's medical records
+ * Retrieve medical records for the current user
  */
 export async function getMyMedicalRecords(req, res) {
   try {
@@ -21,7 +21,7 @@ export async function getMyMedicalRecords(req, res) {
 }
 
 /**
- * Get specific medical record by ID
+ * Get a specific medical record (viewable by treating doctor or patient)
  */
 export async function getMedicalRecordById(req, res) {
   try {
@@ -44,14 +44,13 @@ export async function getMedicalRecordById(req, res) {
 }
 
 /**
- * Get medical records for a specific patient (for doctors)
+ * Get all medical records for a patient (doctors only)
  */
 export async function getPatientMedicalRecords(req, res) {
   try {
     const { patientId } = req.params;
     const userId = req.user.userId;
 
-    // Only doctors can view patient records
     const [user] = await db.query('SELECT user_type FROM users WHERE id = ?', [userId]);
     
     if (!user || user[0].user_type !== 'doctor') {
@@ -72,14 +71,13 @@ export async function getPatientMedicalRecords(req, res) {
 }
 
 /**
- * Create a new medical record
+ * Create a new medical record for a patient (doctors only)
  */
 export async function createMedicalRecord(req, res) {
   try {
     const { patient_id, diagnosis, symptoms, treatment, notes, record_date } = req.body;
     const doctorId = req.user.userId;
 
-    // Verify doctor creating the record
     const [doctor] = await db.query('SELECT user_type FROM users WHERE id = ?', [doctorId]);
     
     if (!doctor || doctor[0].user_type !== 'doctor') {
@@ -110,7 +108,6 @@ export async function updateMedicalRecord(req, res) {
     const userId = req.user.userId;
     const { diagnosis, symptoms, treatment, notes, record_date } = req.body;
 
-    // Check if record exists and user has permission
     const [records] = await db.query(
       'SELECT * FROM medical_records WHERE id = ? AND (patient_id = ? OR doctor_id = ?)',
       [id, userId, userId]

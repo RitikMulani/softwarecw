@@ -2,18 +2,18 @@ import db from '../config/database.js';
 import BiometricValidator from '../utils/BiometricValidator.js';
 
 /**
- * Store device reading with validation
+ * Store device reading with biometric validation
+ * Validates data against realistic ranges before storing
+ * Flags anomalous readings for further review
  */
 export async function storeReading(req, res) {
   try {
     const { heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps } = req.body;
     const userId = req.user.userId;
 
-    // Validate the incoming data
     const validation = BiometricValidator.validateReading(req.body);
 
     if (!validation.valid) {
-      // Data is invalid - return error
       return res.status(400).json({
         message: 'Invalid biometric data received',
         errors: validation.errors,
@@ -21,10 +21,8 @@ export async function storeReading(req, res) {
       });
     }
 
-    // Check if data contains anomalies (warnings)
     const isAnomaly = validation.isAnomaly;
 
-    // Store the reading in database
     const [result] = await db.query(
       `INSERT INTO device_readings (user_id, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, body_temp, hrv, steps, is_anomaly, created_at) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP) RETURNING id`,
@@ -54,7 +52,7 @@ export async function storeReading(req, res) {
 }
 
 /**
- * Get latest reading
+ * Retrieve the latest biometric reading for the user
  */
 export async function getLatestReading(req, res) {
   try {
@@ -82,7 +80,8 @@ export async function getLatestReading(req, res) {
 }
 
 /**
- * Get readings with validation status
+ * Get validated readings from the past N days
+ * Re-validates each reading against current standards
  */
 export async function getReadingsWithValidation(req, res) {
   try {

@@ -3,6 +3,10 @@ import { io } from 'socket.io-client';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:4000';
 
+/**
+ * Custom hook for managing WebSocket connection and real-time biometric updates
+ * Connects to user-specific room and listens for health alerts
+ */
 export function useSocket(userId) {
   const [connected, setConnected] = useState(false);
   const [lastReading, setLastReading] = useState(null);
@@ -12,7 +16,6 @@ export function useSocket(userId) {
   useEffect(() => {
     if (!userId) return;
 
-    // Initialize socket connection
     socketRef.current = io(WS_URL, {
       path: process.env.REACT_APP_WS_PATH || '/ws',
       transports: ['websocket', 'polling'],
@@ -21,7 +24,6 @@ export function useSocket(userId) {
     socketRef.current.on('connect', () => {
       console.log('WebSocket connected');
       setConnected(true);
-      // Join user room
       socketRef.current.emit('join', userId);
     });
 
@@ -43,7 +45,6 @@ export function useSocket(userId) {
       }
     });
 
-    // Cleanup
     return () => {
       if (socketRef.current) {
         socketRef.current.emit('leave', userId);
